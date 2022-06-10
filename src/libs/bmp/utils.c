@@ -36,15 +36,14 @@ void skip_offset(FILE *stream, u_int32_t offset)
   }
 }
 
-bool read_bmp(FILE *stream, char *output, u_int64_t size)
+void read_bmp_byte(FILE *stream, char *output)
 {
-  char *result = fgets(output, size, stream);
+  size_t result = fread((void *)output, 1, 1, stream);
   if (result == NULL)
   {
-    fprintf(stderr, "Error reading %llu bytes from bmp file", size);
+    fprintf(stderr, "Error reading byte from bmp file");
     exit(1);
   }
-  return strnlen(result, size) == size ? true : false;
 }
 
 void close_stream(FILE *stream)

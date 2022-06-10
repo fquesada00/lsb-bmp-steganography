@@ -19,7 +19,7 @@ FILE *get_stream(char *path);
 
 void load_header(FILE *stream, bmp_header *header);
 
-bool read_bmp(FILE *stream, char *output, u_int64_t size);
+void read_bmp_byte(FILE *stream, char *output);
 
 void close_stream(FILE *stream);
 

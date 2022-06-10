@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <args.h>
 #include <bmp.h>
-#include <constants.h>
 
 int main(int argc, char *argv[])
 {
@@ -25,6 +24,13 @@ int main(int argc, char *argv[])
     skip_offset(bmp_stream, header.offset);
 
     char pixel;
-    bool reached_eof = read_bmp(bmp_stream, &pixel, 1);
-    printf("eof: %d  - pixel: %d\n", reached_eof, pixel);
+    bool reached_eof;
+    int iterations = 10;
+    while (iterations)
+    {
+        read_bmp_byte(bmp_stream, &pixel);
+        printf("pixel: %d\n", pixel);
+        iterations--;
+    };
+    close_stream(bmp_stream);
 }
