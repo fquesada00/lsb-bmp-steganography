@@ -1,31 +1,56 @@
-SRC_DIR := src
-OBJ_DIR := obj
-BIN_DIR := bin
+#The Target Binary Program
+TARGET      := stegobmp
 
-EXE := $(BIN_DIR)/stegobmp
-SRC := $(wildcard $(SRC_DIR)/*.c)
-OBJ := $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+#The Directories, Source, Includes, Objects, Binary and Resources
+SRCDIR      := src
+HEADERS     := include
+BUILDDIR    := obj
 
-CPPFLAGS := -Iinclude -MMD -MP
-CFLAGS   := -std=c11 -Wall -g -pedantic
-LDFLAGS  := -fsanitize=address
-LDLIBS   := -lm
+#Flags, Libraries and Includes
+LDFLAGS=-fsanitize=address
+CFLAGS=-std=c11 -Wall -g -pedantic
+CPPFLAGS := -I$(HEADERS)
 
-.PHONY: all clean
+#---------------------------------------------------------------------------------
+#DO NOT EDIT BELOW THIS LINE
+#---------------------------------------------------------------------------------
+SOURCES     := $(shell find $(SRCDIR) -type f -name *.c)
+OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.c=.o))
 
-all: $(EXE)
+#Defauilt Make
+all: $(TARGET)
 
+#Remake
+remake: cleaner all
 
-$(EXE): $(OBJ) | $(BIN_DIR)
-	$(CC) $(LDFLAGS) $(LDLIBS) -o $@
+#Make the Directories
+directories:
+	@mkdir -p $(BUILDDIR)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-
-$(BIN_DIR) $(OBJ_DIR):
-	mkdir -p $@
-
+#Clean only Objecst
 clean:
-	@$(RM) -rv $(BIN_DIR) $(OBJ_DIR)
+	@$(RM) -rf $(BUILDDIR)
 
--include $(OBJ:.o=.d)
+#Full Clean, Objects and Binaries
+cleaner: clean
+	@$(RM) -f $(TARGET)
+
+#Pull in dependency info for *existing* .o files
+-include $(OBJECTS:.o=.d)
+
+#Link
+$(TARGET): $(OBJECTS)
+	$(CC) -o $(TARGET) $^ $(LDFLAGS)
+
+#Compile
+$(BUILDDIR)/%.o: $(SRCDIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -MM $(SRCDIR)/$*.c > $(BUILDDIR)/$*.d
+	@cp -f $(BUILDDIR)/$*.d $(BUILDDIR)/$*.d.tmp
+	@sed -e 's|.*:|$(BUILDDIR)/$*.o:|' < $(BUILDDIR)/$*.d.tmp > $(BUILDDIR)/$*.d
+	@sed -e 's/.*://' -e 's/\\$$//' < $(BUILDDIR)/$*.d.tmp | fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >> $(BUILDDIR)/$*.d
+	@rm -f $(BUILDDIR)/$*.d.tmp
+
+#Non-File Targets
+.PHONY: all remake clean cleaner resources
