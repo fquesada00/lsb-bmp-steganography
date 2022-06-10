@@ -1,0 +1,15 @@
+---
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: Always
+AlignTrailingComments: true
+BreakBeforeBraces: Attach
+BreakConstructorInitializers: BeforeComma
+ColumnLimit: 130
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+IndentCaseBlocks: true
+IndentCaseLabels: true
+IndentWidth: 4
+TabWidth: 4
+UseTab: Always
+...
