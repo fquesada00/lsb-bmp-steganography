@@ -2,8 +2,8 @@
 #define __ARGS_H__
 #include <getopt.h>
 #include <stdbool.h>
-#include <steganography.h>
 #include <stdlib.h>
+#include <steganography.h>
 enum MAX_SIZES {
 	MAX_FILENAME_SIZE = 64,
 };
@@ -28,7 +28,7 @@ typedef struct args_t {
 	char in[MAX_FILENAME_SIZE];
 	char bitmapFile[MAX_FILENAME_SIZE];
 	char out[MAX_FILENAME_SIZE];
-	steganography_t steganographyMode;
+	Steganography_t steganographyMode;
 	// TODO: Add encryption mode
 } args_t;
 

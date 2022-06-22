@@ -54,3 +54,5 @@ dkms.conf
 .vscode/
 
 stegobmp
+*.DS_Store
+*.png

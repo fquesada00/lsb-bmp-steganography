@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <steganography.h>
-#include <utils.h>
 #include <string.h>
+#include <utils.h>
 
 uint8_t loadByte(uint8_t byte) {
 	uint8_t dest[BYTE_BITS];
@@ -22,7 +22,7 @@ uint8_t loadByte(uint8_t byte) {
 
 int lsb1Hide(uint8_t *coverImage, uint8_t *message) { return 0; }
 
-stegMessageFormat_t *lsb1Extract(FILE *image, long imageSize, bool isEncrypted) {
+StegMessageFormat_t *lsb1Extract(FILE *image, long imageSize, bool isEncrypted) {
 	uint32_t messageLength = 0;
 
 	// Read the message length
@@ -54,7 +54,7 @@ stegMessageFormat_t *lsb1Extract(FILE *image, long imageSize, bool isEncrypted) 
 		// i += BYTE_BITS;
 	}
 
-	stegMessageFormat_t *stegMsgFormat = calloc(1, sizeof(stegMessageFormat_t));
+	StegMessageFormat_t *stegMsgFormat = calloc(1, sizeof(StegMessageFormat_t));
 	stegMsgFormat->length = messageLength;
 	stegMsgFormat->fileData = message;
 	stegMsgFormat->fileExtension = NULL;
