@@ -18,10 +18,11 @@ typedef struct {
 } bmpHeader;
 
 FILE *getStream(char *path);
+FILE *createStream(char *name);
 
 void loadHeader(FILE *stream, bmpHeader *header);
 
-void readBmpByte(FILE *stream, char *output);
+uint8_t readBmpByte(FILE *stream);
 
 void closeStream(FILE *stream);
 

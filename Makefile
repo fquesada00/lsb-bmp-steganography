@@ -7,7 +7,7 @@ HEADERS     := include
 BUILDDIR    := obj
 
 #Flags, Libraries and Includes
-LDFLAGS=-fsanitize=address
+LDFLAGS=#-fsanitize=address
 CFLAGS=-std=c11 -Wall -g -pedantic
 CPPFLAGS := -I$(HEADERS)
 
