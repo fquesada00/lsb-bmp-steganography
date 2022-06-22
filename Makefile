@@ -8,8 +8,12 @@ BUILDDIR    := obj
 
 #Flags, Libraries and Includes
 LDFLAGS=#-fsanitize=address
-CFLAGS=-std=c11 -Wall -g -pedantic
+CFLAGS=-std=c11 -Wall -pedantic
 CPPFLAGS := -I$(HEADERS)
+
+ifdef DEBUG
+	CFLAGS += -g
+endif
 
 #---------------------------------------------------------------------------------
 #DO NOT EDIT BELOW THIS LINE
@@ -17,8 +21,13 @@ CPPFLAGS := -I$(HEADERS)
 SOURCES     := $(shell find $(SRCDIR) -type f -name *.c)
 OBJECTS     := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.c=.o))
 
+
+
 #Defauilt Make
 all: $(TARGET)
+
+debug:
+	$(MAKE) all DEBUG=1
 
 #Remake
 remake: cleaner all

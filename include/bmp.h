@@ -1,14 +1,14 @@
 #ifndef __BMP_H__
 #define __BMP_H__
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 
 /*
  * source: https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmapfileheader?redirectedfrom=MSDN
  */
-#pragma pack(1)
+#pragma pack(push, 1)
 typedef struct {
 	uint16_t type;
 	uint32_t size;
@@ -16,6 +16,8 @@ typedef struct {
 	uint16_t reserved2;
 	uint32_t offset; // starting address in bytes (from beginning)
 } bmpHeader;
+
+#pragma pack(pop)
 
 FILE *getStream(char *path);
 FILE *createStream(char *name);
