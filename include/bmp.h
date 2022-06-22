@@ -14,18 +14,18 @@ typedef struct {
 	u_int16_t reserved1;
 	u_int16_t reserved2;
 	u_int32_t offset; // starting address in bytes (from beginning)
-} bmp_header;
+} bmpHeader;
 
-FILE *get_stream(char *path);
+FILE *getStream(char *path);
 
-void load_header(FILE *stream, bmp_header *header);
+void loadHeader(FILE *stream, bmpHeader *header);
 
-void read_bmp_byte(FILE *stream, char *output);
+void readBmpByte(FILE *stream, char *output);
 
-void close_stream(FILE *stream);
+void closeStream(FILE *stream);
 
-void load_header(FILE *stream, bmp_header *header);
+void loadHeader(FILE *stream, bmpHeader *header);
 
-void skip_offset(FILE *stream, u_int32_t offset);
+void skipOffset(FILE *stream, u_int32_t offset);
 
 #endif
