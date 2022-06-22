@@ -3,17 +3,18 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 /*
  * source: https://docs.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmapfileheader?redirectedfrom=MSDN
  */
 #pragma pack(1)
 typedef struct {
-	u_int16_t type;
-	u_int32_t size;
-	u_int16_t reserved1;
-	u_int16_t reserved2;
-	u_int32_t offset; // starting address in bytes (from beginning)
+	uint16_t type;
+	uint32_t size;
+	uint16_t reserved1;
+	uint16_t reserved2;
+	uint32_t offset; // starting address in bytes (from beginning)
 } bmpHeader;
 
 FILE *getStream(char *path);
@@ -26,6 +27,6 @@ void closeStream(FILE *stream);
 
 void loadHeader(FILE *stream, bmpHeader *header);
 
-void skipOffset(FILE *stream, u_int32_t offset);
+void skipOffset(FILE *stream, uint32_t offset);
 
 #endif

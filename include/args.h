@@ -3,6 +3,7 @@
 #include <getopt.h>
 #include <stdbool.h>
 #include <steganography.h>
+#include <stdlib.h>
 enum MAX_SIZES {
 	MAX_FILENAME_SIZE = 64,
 };

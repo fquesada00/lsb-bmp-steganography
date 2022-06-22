@@ -21,7 +21,7 @@ void loadHeader(FILE *stream, bmpHeader *header) {
 	}
 }
 
-void skipOffset(FILE *stream, u_int32_t offset) {
+void skipOffset(FILE *stream, uint32_t offset) {
 	size_t skipSize = offset - sizeof(bmpHeader);
 	char dump[skipSize];
 	size_t result = fread((void *)dump, 1, skipSize, stream);
