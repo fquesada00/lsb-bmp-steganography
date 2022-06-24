@@ -9,13 +9,6 @@
 
 typedef enum args { EMBED, EXTRACT, IN, BITMAP, OUT, STEGANOGRAPHY, BLOCK_CIPHER, MODE_OF_OPERATION, PASSWORD } args;
 
-static struct option longOptions[] = {
-	{"embed", no_argument, NULL, EMBED},		  {"extract", no_argument, NULL, EXTRACT},
-	{"in", required_argument, NULL, IN},		  {"p", required_argument, NULL, BITMAP},
-	{"out", required_argument, NULL, OUT},		  {"steg", required_argument, NULL, STEGANOGRAPHY},
-	{"a", required_argument, NULL, BLOCK_CIPHER}, {"m", required_argument, NULL, MODE_OF_OPERATION},
-	{"pass", required_argument, NULL, PASSWORD},  {0, 0, 0, 0}};
-
 typedef struct Args_t {
 	bool embed;
 	bool extract;

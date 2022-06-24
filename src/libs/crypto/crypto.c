@@ -4,7 +4,7 @@
 #include <utils.h>
 
 static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation);
-static uint8_t **deriveKeyAndIv(uint8_t *password, EVP_CIPHER *cipher);
+static uint8_t **deriveKeyAndIv(char *password, EVP_CIPHER *cipher);
 static int encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, int plaintext_len, uint8_t *key, uint8_t *iv,
 				   unsigned char *ciphertext);
 static int decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, int ciphertext_len, uint8_t *key, uint8_t *iv,
@@ -94,14 +94,15 @@ static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_
 }
 
 // Returns dynamically allocated key and IV.
-static uint8_t **deriveKeyAndIv(uint8_t *password, EVP_CIPHER *cipher) {
+static uint8_t **deriveKeyAndIv(char *password, EVP_CIPHER *cipher) {
 	int keyLength = EVP_CIPHER_key_length(cipher);
 	int ivLength = EVP_CIPHER_iv_length(cipher);
 
 	uint8_t out[keyLength + ivLength];
-	const unsigned char *salt = "";
+	const unsigned char *salt = (unsigned char *)"";
 
-	if (!PKCS5_PBKDF2_HMAC(password, strlen(password), salt, strlen(salt), 1000, EVP_sha256(), keyLength + ivLength, out)) {
+	if (!PKCS5_PBKDF2_HMAC(password, strlen(password), salt, strlen((char *)salt), 1000, EVP_sha256(), keyLength + ivLength,
+						   out)) {
 		exitWithError("PKCS5_PBKDF2_HMAC failed while deriving key and IV\n");
 	}
 

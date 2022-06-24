@@ -1,4 +1,5 @@
 #include <args.h>
+#include <arpa/inet.h>
 #include <bmp.h>
 #include <constants.h>
 #include <lsb1.h>
@@ -15,12 +16,6 @@ int main(int argc, char *argv[]) {
 	BmpHeader header = {0};
 	FILE *coverImage = createStream(args.bitmapFile, "r");
 	FILE *outputImage = NULL;
-
-	uint32_t a = 1;
-	uint32_t a_b = htonl(a);
-
-	printf("%d\n", a);
-	printf("%d\n", a_b);
 
 	if (args.embed) {
 		outputImage = createStream(args.out, "w");

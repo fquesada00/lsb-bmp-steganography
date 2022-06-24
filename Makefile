@@ -50,13 +50,13 @@ cleaner: clean
 
 #Link
 $(TARGET): $(OBJECTS)
-	@$(CC) -o $(TARGET) $^ $(LDFLAGS)
+	@$(CC) -o $(TARGET) $^ $(LDFLAGS) $(LCRYPTO)
 
 #Compile
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c
 	@mkdir -p $(dir $@) 
 	@$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $< 
-	@$(CC) $(CFLAGS) $(CPPFLAGS) $(LCRYPTO) -MM $(SRCDIR)/$*.c > $(BUILDDIR)/$*.d 
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -MM $(SRCDIR)/$*.c > $(BUILDDIR)/$*.d 
 	@cp -f $(BUILDDIR)/$*.d $(BUILDDIR)/$*.d.tmp
 	@sed -e 's|.*:|$(BUILDDIR)/$*.o:|' < $(BUILDDIR)/$*.d.tmp > $(BUILDDIR)/$*.d
 	@sed -e 's/.*://' -e 's/\\$$//' < $(BUILDDIR)/$*.d.tmp | fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >> $(BUILDDIR)/$*.d
