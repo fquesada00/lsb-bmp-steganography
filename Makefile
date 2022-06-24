@@ -10,6 +10,7 @@ BUILDDIR    := obj
 LDFLAGS=#-fsanitize=address
 CFLAGS=-std=c99 -Wall -pedantic -D_GNU_SOURCE #-Werror
 CPPFLAGS := -I$(HEADERS)
+LCRYPTO=-lcrypto
 
 ifdef DEBUG
 	CFLAGS += -g
@@ -53,8 +54,8 @@ $(TARGET): $(OBJECTS)
 
 #Compile
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
+	@mkdir -p $(dir $@) 
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $< $(LCRYPTO)
 	@$(CC) $(CFLAGS) $(CPPFLAGS) -MM $(SRCDIR)/$*.c > $(BUILDDIR)/$*.d
 	@cp -f $(BUILDDIR)/$*.d $(BUILDDIR)/$*.d.tmp
 	@sed -e 's|.*:|$(BUILDDIR)/$*.o:|' < $(BUILDDIR)/$*.d.tmp > $(BUILDDIR)/$*.d
