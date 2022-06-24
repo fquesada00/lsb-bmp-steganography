@@ -1,6 +1,14 @@
 #include <crypto.h>
 #include <openssl/evp.h>
+#include <string.h>
 #include <utils.h>
+
+static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation);
+static uint8_t **deriveKeyAndIv(uint8_t *password, EVP_CIPHER *cipher);
+static int encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, int plaintext_len, uint8_t *key, uint8_t *iv,
+				   unsigned char *ciphertext);
+static int decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, int ciphertext_len, uint8_t *key, uint8_t *iv,
+				   unsigned char *plaintext);
 
 static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
 	EVP_CIPHER *cipher = NULL;
@@ -86,13 +94,13 @@ static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_
 }
 
 // Returns dynamically allocated key and IV.
-uint8_t **deriveKeyAndIv(uint8_t *password, BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
-	EVP_CIPHER *cipher = getCipherFunction(blockCipher, modeOfOperation);
+static uint8_t **deriveKeyAndIv(uint8_t *password, EVP_CIPHER *cipher) {
 	int keyLength = EVP_CIPHER_key_length(cipher);
 	int ivLength = EVP_CIPHER_iv_length(cipher);
 
 	uint8_t out[keyLength + ivLength];
-	char *salt = "";
+	const unsigned char *salt = "";
+
 	if (!PKCS5_PBKDF2_HMAC(password, strlen(password), salt, strlen(salt), 1000, EVP_sha256(), keyLength + ivLength, out)) {
 		exitWithError("PKCS5_PBKDF2_HMAC failed while deriving key and IV\n");
 	}
@@ -107,8 +115,8 @@ uint8_t **deriveKeyAndIv(uint8_t *password, BlockCipher_t blockCipher, ModeOfOpe
 }
 
 // Fuente: https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
-int encrypt(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation, uint8_t *plaintext, int plaintext_len, uint8_t *key,
-			uint8_t *iv, unsigned char *ciphertext) {
+static int encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, int plaintext_len, uint8_t *key, uint8_t *iv,
+				   unsigned char *ciphertext) {
 	EVP_CIPHER_CTX *ctx;
 
 	int len;
@@ -125,7 +133,7 @@ int encrypt(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation, uint8_
 	 * The IV size for *most* modes is the same as the block size.
 	 * For AES this is 128 bits
 	 */
-	if (1 != EVP_EncryptInit_ex(ctx, getCipherFunction(blockCipher, modeOfOperation), NULL, key, iv))
+	if (1 != EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv))
 		exitWithError("Error initialising cipher\n");
 
 	/*
@@ -150,7 +158,7 @@ int encrypt(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation, uint8_
 	return ciphertext_len;
 }
 
-int decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, int ciphertext_len, uint8_t *key, uint8_t *iv, uint8_t *plaintext) {
+static int decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, int ciphertext_len, uint8_t *key, uint8_t *iv, uint8_t *plaintext) {
 	EVP_CIPHER_CTX *ctx;
 
 	int len;
@@ -190,4 +198,27 @@ int decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, int ciphertext_len, uint8_t
 	EVP_CIPHER_CTX_free(ctx);
 
 	return plaintext_len;
+}
+
+void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
+
+	EVP_CIPHER *cipher = getCipherFunction(blockCipher, modeOfOperation);
+	uint32_t blockSize = EVP_CIPHER_block_size(cipher);
+
+	uint8_t **keyAndIv = deriveKeyAndIv(password, cipher);
+	uint8_t *key = keyAndIv[0];
+	uint8_t *iv = keyAndIv[1];
+
+	uint32_t fileLength = getFileLength(file);
+	uint8_t plainText[fileLength];
+	uint32_t cipherTextLength = sizeof(uint32_t) + fileLength + blockSize;
+	uint8_t cipherText[cipherTextLength];
+
+	fread(plainText, sizeof(uint8_t), fileLength, file);
+
+	uint32_t cipherTextOffset = encrypt(cipher, plainText, fileLength, key, iv, cipherText);
+
+	rewind(file);
+
+	fwrite(cipherText, sizeof(uint8_t), cipherTextOffset, file);
 }

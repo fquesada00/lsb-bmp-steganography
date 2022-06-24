@@ -16,6 +16,12 @@ int main(int argc, char *argv[]) {
 	FILE *coverImage = createStream(args.bitmapFile, "r");
 	FILE *outputImage = NULL;
 
+	uint32_t a = 1;
+	uint32_t a_b = htonl(a);
+
+	printf("%d\n", a);
+	printf("%d\n", a_b);
+
 	if (args.embed) {
 		outputImage = createStream(args.out, "w");
 		FILE *inputMessage = createStream(args.in, "r");
@@ -23,6 +29,10 @@ int main(int argc, char *argv[]) {
 		copyBmpHeaderAndOffset(coverImage, outputImage, &header);
 
 		FILE *encodedInputTmp = copyEncodedInputToFile(inputMessage, ".png");
+
+		// if (args.password) {
+		// 	encryptFile(encodedInputTmp, args.password, args.blockCipher, args.modeOfOperation);
+		// }
 
 		if (args.steganographyMode == LSB1 || args.steganographyMode == LSB4) {
 			lsbHide(coverImage, encodedInputTmp, outputImage, header.size - header.offset, getLsbCount(args.steganographyMode));
