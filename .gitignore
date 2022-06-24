@@ -51,8 +51,10 @@ Module.symvers
 Mkfile.old
 dkms.conf
  
-.vscode/
+.vscode/*
 
 stegobmp
 *.DS_Store
+
 *.png
+!data/*

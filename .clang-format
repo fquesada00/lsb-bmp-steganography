@@ -1,7 +1,6 @@
 ---
 AllowShortBlocksOnASingleLine: Always
 AllowShortCaseLabelsOnASingleLine: false
-AllowShortIfStatementsOnASingleLine: Always
 AlignTrailingComments: true
 BreakBeforeBraces: Attach
 BreakConstructorInitializers: BeforeComma

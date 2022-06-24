@@ -21,10 +21,8 @@ typedef struct {
 
 void loadHeader(FILE *stream, BmpHeader *header);
 
-uint8_t readBmpByte(FILE *stream);
-
-void loadHeader(FILE *stream, BmpHeader *header);
-
 void skipOffset(FILE *stream, uint32_t offset);
+
+void copyBmpHeaderAndOffset(FILE *src, FILE *dest, BmpHeader *header);
 
 #endif

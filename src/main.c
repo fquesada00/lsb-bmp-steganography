@@ -16,9 +16,9 @@ int main(int argc, char *argv[]) {
 	printf("%s\n", args.out);
 	printf("%s\n", args.steganographyMode == LSB1 ? "LSB1" : "LSB4");
 	*/
-	char *bmpFilePath = "./data/ejemplo2022/ladoLSB1.bmp";
+	char *bmpFilePath = "./data/ladoLSB1.bmp";
 	BmpHeader header = {0};
-	FILE *bmpStream = getStream(bmpFilePath);
+	FILE *bmpStream = getStream(bmpFilePath);	
 	loadHeader(bmpStream, &header);
 	// printf("%d\n", header.type);
 	printf("%d\n", header.size);
@@ -27,19 +27,27 @@ int main(int argc, char *argv[]) {
 	// printf("%d\n", header.offset);
 	skipOffset(bmpStream, header.offset);
 
-	// uint8_t i = 32;
-	// while(i--) {
-	// 	printf("%d\n",readBmpByte(bmpStream));
-	// }
-	// exit(1);
 
 	StegMessageFormat_t *extractedMessage = lsb1Extract(bmpStream, header.size, false);
 	closeStream(bmpStream);
 
 	printf("Steg size = %d\n", extractedMessage->length);
-	printf("%p\n", extractedMessage->fileExtension);
-	printf("%c\n", extractedMessage->fileData[0]);
 	printf("Steg extension = %s\n", extractedMessage->fileExtension);
 
 	saveExtractedMessageToFile(extractedMessage->fileData, extractedMessage->length, extractedMessage->fileExtension, "out");
+	// FILE *message = getStream("./data/ejemplo2022/out.png");
+	
+	// // load the message length
+	// FILE *outputImage = fopen("lsb1.bmp", "w");
+	// if (outputImage == NULL) {
+	// 	exitWithError("Could not open output file.");
+	// }
+
+	// copyBmpHeaderAndOffset(bmpStream, outputImage, &header);
+	// lsb1Hide(bmpStream, message, outputImage, ".png", header.size - header.offset);
+
+	// closeStream(bmpStream);
+	// closeStream(message);
+	// closeStream(outputImage);
+	return 0;
 }

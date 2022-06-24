@@ -14,7 +14,7 @@ void loadHeader(FILE *stream, BmpHeader *header) {
 
 void skipOffset(FILE *stream, uint32_t offset) {
 	size_t skipSize = offset - sizeof(BmpHeader);
-	char dump[skipSize];
+	uint8_t dump[skipSize];
 	size_t result = fread((void *)dump, 1, skipSize, stream);
 	if (result != skipSize) {
 		fprintf(stderr, "Error skipping bmp offset");
@@ -22,16 +22,25 @@ void skipOffset(FILE *stream, uint32_t offset) {
 	}
 }
 
-uint8_t readBmpByte(FILE *stream) {
-	uint8_t byte;
-	fread(&byte, 1, 1, stream);
-	if (ferror(stream) != 0) {
-		fprintf(stderr, "Error reading byte from bmp file");
+void copyBmpHeaderAndOffset(FILE *src, FILE *dest, BmpHeader *header) {
+	size_t bytesRead = fread((void *)header, 1, sizeof(BmpHeader), src);
+	
+	if (bytesRead != sizeof(BmpHeader)) {
+		fprintf(stderr, "Error reading bmp header");
 		exit(EXIT_FAILURE);
 	}
-	if (feof(stream) != 0) {
-		fprintf(stderr, "Reached EOF reading byte from bmp file");
+	
+	fwrite((void *)header, 1, sizeof(BmpHeader), dest);
+	
+	size_t offsetSize = header->offset - sizeof(BmpHeader);
+	uint8_t dump[offsetSize];
+	
+	bytesRead = fread((void *)dump, 1, offsetSize, src);
+
+	if (bytesRead != offsetSize) {
+		fprintf(stderr, "Error reading bmp offset");
 		exit(EXIT_FAILURE);
 	}
-	return byte;
+
+	fwrite((void *)dump, 1, offsetSize, dest);	
 }
