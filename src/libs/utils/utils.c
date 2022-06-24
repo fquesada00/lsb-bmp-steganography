@@ -98,7 +98,7 @@ FILE *copyEncodedInputToFile(FILE *inputStream, char *extension) {
 	saveStream(tmp, bytes, inputLength);
 
 	// cargamos la extension
-	size_t extensionLength = strnlen(extension, MAX_FILENAME_LENGTH);
+	size_t extensionLength = strnlen(extension, MAX_FILENAME_SIZE);
 	uint8_t *extensionBytes = (uint8_t *)extension;
 	fwrite(extensionBytes, 1, extensionLength + 1, tmp);
 
