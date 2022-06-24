@@ -1,3 +1,4 @@
+#include <constants.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -76,4 +77,23 @@ void writeByte(FILE *stream, uint8_t byte) {
 		fprintf(stderr, "Error writing byte to bmp file");
 		exit(EXIT_FAILURE);
 	}
+}
+
+FILE *copyEncodedInputToFile(FILE *inputStream, char *extension) {
+	uint32_t inputLength = getFileLength(inputStream);
+
+	FILE *tmp = createStream(TMP_FILENAME, "rw");
+
+	// cargamos los 4 bytes del largo del mensaje (de izquierda a derecha de a bytes)
+	fwrite(&inputLength, 1, sizeof(inputLength), tmp);
+
+	// cargamos el mensaje byte a byte
+	fwrite(inputStream, 1, inputLength, tmp);
+
+	// cargamos la extension
+	size_t extensionLength = strnlen(extension, MAX_FILENAME_LENGTH);
+	uint8_t *extensionBytes = (uint8_t *)extension;
+	fwrite(extensionBytes, 1, extensionLength + 1, tmp);
+
+	return tmp;
 }

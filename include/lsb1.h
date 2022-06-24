@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <steganography.h>
 
-void lsb1Hide(FILE *coverImage, FILE *message, FILE *outputImage, char *messageExtension, uint32_t coverImageSize);
+void lsb1Hide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverImageSize);
 StegMessageFormat_t *lsb1Extract(FILE *image, long imageSize, bool isEncrypted);
 void writeLsb1Byte(FILE *src, FILE *dest, uint8_t messageByte);
 uint8_t readLsb1Byte(FILE *src);

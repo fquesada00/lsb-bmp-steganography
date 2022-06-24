@@ -22,4 +22,6 @@ uint8_t readByte(FILE *stream);
 
 void writeByte(FILE *stream, uint8_t byte);
 
+FILE *copyEncodedInputToFile(FILE *inputStream, char *extension);
+
 #endif

@@ -1,5 +1,6 @@
 #include <args.h>
 #include <bmp.h>
+#include <constants.h>
 #include <lsb1.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -19,9 +20,16 @@ int main(int argc, char *argv[]) {
 		FILE *inputMessage = createStream(args.in, "r");
 
 		copyBmpHeaderAndOffset(coverImage, outputImage, &header);
-		lsb1Hide(coverImage, inputMessage, outputImage, ".png", header.size - header.offset);
+
+		FILE *encodedInput = copyEncodedInputToFile(inputMessage, ".png");
+
+		lsb1Hide(coverImage, encodedInput, outputImage, header.size - header.offset);
 
 		closeStream(inputMessage);
+		closeStream(encodedInput);
+
+		// remove the encoded input file
+		remove(TMP_FILENAME);
 	} else {
 		loadHeader(coverImage, &header);
 		skipOffset(coverImage, header.offset);

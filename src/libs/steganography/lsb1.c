@@ -8,38 +8,22 @@
 #include <string.h>
 #include <utils.h>
 
-void lsb1Hide(FILE *coverImage, FILE *message, FILE *outputImage, char *fileExtension, uint32_t coverImageLength) {
+void lsb1Hide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverImageLength) {
 
-	uint32_t messageLength = getFileLength(message);
-	size_t extensionLength = strnlen(fileExtension, MAX_FILENAME_LENGTH);
+	uint32_t messageLength = getFileLength(input);
 
-	size_t bytesToHide = (messageLength + sizeof(messageLength) + extensionLength);
-
-	if (coverImageLength < bytesToHide * BYTE_BITS) {
+	if (coverImageLength < messageLength * BYTE_BITS) {
 		exitWithError("Cover image is too small to hide the message");
-	}
-
-	// cargamos los 4 bytes del largo del mensaje (de izquierda a derecha de a bytes)
-	for (int i = sizeof(messageLength) - 1; i >= 0; i--) {
-		int byteShift = i * BYTE_BITS;
-		writeLsb1Byte(coverImage, outputImage, messageLength >> byteShift);
 	}
 
 	// cargamos el mensaje byte a byte
 	for (int i = 0; i < messageLength; i++) {
-		uint8_t messageByte = readByte(message);
-		writeLsb1Byte(coverImage, outputImage, messageByte);
-	}
-
-	// cargamos la extension
-	uint8_t *extensionBytes = (uint8_t *)fileExtension;
-	for (int i = 0; i < (extensionLength + 1); i++) {
-		uint8_t messageByte = extensionBytes[i];
+		uint8_t messageByte = readByte(input);
 		writeLsb1Byte(coverImage, outputImage, messageByte);
 	}
 
 	// cargamos los bytes restantes del archivo
-	uint32_t remainingLength = coverImageLength - bytesToHide * BYTE_BITS;
+	uint32_t remainingLength = coverImageLength - messageLength * BYTE_BITS;
 	uint8_t *remainingBytes = (uint8_t *)malloc(remainingLength);
 	// TODO: Check	errors
 	fread(remainingBytes, 1, remainingLength, coverImage);
