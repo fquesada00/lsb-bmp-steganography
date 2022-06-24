@@ -11,8 +11,9 @@
 void lsbHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverImageLength, size_t lsbCount) {
 
 	uint32_t messageLength = getFileLength(input);
+	uint32_t outputByteSize = BYTE_BITS / lsbCount;
 
-	if (coverImageLength < messageLength * BYTE_BITS) {
+	if (coverImageLength < messageLength * outputByteSize) {
 		exitWithError("Cover image is too small to hide the message");
 	}
 
@@ -23,7 +24,7 @@ void lsbHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverIma
 	}
 
 	// cargamos los bytes restantes del archivo
-	uint32_t remainingLength = coverImageLength - messageLength * BYTE_BITS;
+	uint32_t remainingLength = coverImageLength - messageLength * outputByteSize;
 	uint8_t dump[remainingLength];
 	// TODO: Check	errors
 	fread((void *)dump, 1, remainingLength, coverImage);
@@ -62,8 +63,10 @@ void writeLsbByte(FILE *src, FILE *dest, uint8_t messageByte, size_t lsbCount) {
 }
 
 StegMessageFormat_t *lsbExtract(FILE *image, long imageSize, size_t lsbCount, bool isEncrypted) {
+	uint32_t outputByteSize = BYTE_BITS / lsbCount;
+
 	uint32_t messageLength = 0;
-	// 00000000 00000000 00000000 01010110
+
 	//  Read the message length
 	for (int i = 0; i < sizeof(messageLength); i++) {
 		messageLength |= readLsbByte(image, lsbCount);
@@ -71,7 +74,7 @@ StegMessageFormat_t *lsbExtract(FILE *image, long imageSize, size_t lsbCount, bo
 			messageLength <<= BYTE_BITS;
 	}
 
-	if (imageSize < messageLength * BYTE_BITS) {
+	if (imageSize < messageLength * outputByteSize) {
 		exitWithError("Extracted invalid length for hidden message.");
 	}
 

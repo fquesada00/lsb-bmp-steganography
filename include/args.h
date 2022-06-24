@@ -10,6 +10,7 @@ enum MAX_SIZES {
 
 typedef enum args {
 	EMBED,
+	EXTRACT,
 	IN,
 	BITMAP,
 	OUT,
@@ -17,6 +18,7 @@ typedef enum args {
 } args;
 
 static struct option longOptions[] = {{"embed", no_argument, NULL, EMBED},
+									  {"extract", no_argument, NULL, EXTRACT},
 									  {"in", required_argument, NULL, IN},
 									  {"p", required_argument, NULL, BITMAP},
 									  {"out", required_argument, NULL, OUT},
@@ -25,6 +27,7 @@ static struct option longOptions[] = {{"embed", no_argument, NULL, EMBED},
 
 typedef struct Args_t {
 	bool embed;
+	bool extract;
 	char in[MAX_FILENAME_SIZE];
 	char bitmapFile[MAX_FILENAME_SIZE];
 	char out[MAX_FILENAME_SIZE];
@@ -33,5 +36,7 @@ typedef struct Args_t {
 } Args_t;
 
 void parseArgs(Args_t *args, int argc, char *argv[]);
+
+size_t getLsbCount(Steganography_t lsbMode);
 
 #endif

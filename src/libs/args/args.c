@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <steganography.h>
 #include <string.h>
+#include <utils.h>
 
 extern char *optarg;
 
@@ -19,6 +20,9 @@ void parseArgs(Args_t *args, int argc, char *argv[]) {
 		switch (option) {
 			case EMBED:
 				args->embed = true;
+				break;
+			case EXTRACT:
+				args->extract = true;
 				break;
 			case IN:
 				strncpy(args->in, optarg, MAX_FILENAME_SIZE);
@@ -67,5 +71,17 @@ void parseArgs(Args_t *args, int argc, char *argv[]) {
 	}
 	if (missingArgs) {
 		exit(EXIT_FAILURE);
+	}
+}
+
+size_t getLsbCount(Steganography_t lsbMode) {
+	switch (lsbMode) {
+		case LSB1:
+			return 1;
+		case LSB4:
+			return 4;
+		default:
+			exitWithError("Invalid steganography mode");
+			return 0;
 	}
 }

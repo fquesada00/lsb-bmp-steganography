@@ -22,23 +22,28 @@ int main(int argc, char *argv[]) {
 
 		copyBmpHeaderAndOffset(coverImage, outputImage, &header);
 
-		FILE *encodedInput = copyEncodedInputToFile(inputMessage, ".png");
+		FILE *encodedInputTmp = copyEncodedInputToFile(inputMessage, ".png");
 
-		lsbHide(coverImage, encodedInput, outputImage, header.size - header.offset, 1);
+		if (args.steganographyMode == LSB1 || args.steganographyMode == LSB4) {
+			lsbHide(coverImage, encodedInputTmp, outputImage, header.size - header.offset, getLsbCount(args.steganographyMode));
+		}
 
 		closeStream(inputMessage);
-		closeStream(encodedInput);
+		closeStream(encodedInputTmp);
 
 		// remove the encoded input file
 		remove(TMP_FILENAME);
-	} else {
+	} else if (args.extract) {
 		loadHeader(coverImage, &header);
 		skipOffset(coverImage, header.offset);
 
-		StegMessageFormat_t *extractedMessage = lsbExtract(coverImage, header.size, 1, false);
-		
-		outputImage = saveExtractedMessageToFile(extractedMessage->fileData, extractedMessage->length, extractedMessage->fileExtension,
-								   args.out);
+		if (args.steganographyMode == LSB1 || args.steganographyMode == LSB4) {
+			StegMessageFormat_t *extractedMessage =
+				lsbExtract(coverImage, header.size, getLsbCount(args.steganographyMode), false);
+
+			outputImage = saveExtractedMessageToFile(extractedMessage->fileData, extractedMessage->length,
+													 extractedMessage->fileExtension, args.out);
+		}
 	}
 
 	closeStream(coverImage);

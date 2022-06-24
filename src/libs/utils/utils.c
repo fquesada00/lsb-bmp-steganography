@@ -87,8 +87,8 @@ FILE *copyEncodedInputToFile(FILE *inputStream, char *extension) {
 	FILE *tmp = createStream(TMP_FILENAME, "w+");
 
 	// cargamos los 4 bytes del largo del mensaje (de izquierda a derecha de a bytes)
-	for(int i = 3; i >=0; i--) {
-		uint8_t byte = inputLength >> (i * 8);
+	for (int i = sizeof(inputLength) - 1; i >= 0; i--) {
+		uint8_t byte = inputLength >> (i * BYTE_BITS);
 		writeByte(tmp, byte);
 	}
 
