@@ -8,46 +8,32 @@
 #include <utils.h>
 
 int main(int argc, char *argv[]) {
-	/*
-	args_t args = {0};
+	Args_t args = {0};
 	parseArgs(&args, argc, argv);
-	printf("%s\n", args.in);
-	printf("%s\n", args.bitmapFile);
-	printf("%s\n", args.out);
-	printf("%s\n", args.steganographyMode == LSB1 ? "LSB1" : "LSB4");
-	*/
-	char *bmpFilePath = "./data/ladoLSB1.bmp";
+
 	BmpHeader header = {0};
-	FILE *bmpStream = getStream(bmpFilePath);	
-	loadHeader(bmpStream, &header);
-	// printf("%d\n", header.type);
-	printf("%d\n", header.size);
-	// printf("%d\n", header.reserved1);
-	// printf("%d\n", header.reserved2);
-	// printf("%d\n", header.offset);
-	skipOffset(bmpStream, header.offset);
+	FILE *coverImage = createStream(args.bitmapFile, "r");
+	FILE *outputImage = createStream(args.out, "w");
 
+	if (args.embed) {
+		FILE *inputMessage = createStream(args.in, "r");
 
-	StegMessageFormat_t *extractedMessage = lsb1Extract(bmpStream, header.size, false);
-	closeStream(bmpStream);
+		copyBmpHeaderAndOffset(coverImage, outputImage, &header);
+		lsb1Hide(coverImage, inputMessage, outputImage, ".png", header.size - header.offset);
 
-	printf("Steg size = %d\n", extractedMessage->length);
-	printf("Steg extension = %s\n", extractedMessage->fileExtension);
+		closeStream(inputMessage);
+	} else {
+		loadHeader(coverImage, &header);
+		skipOffset(coverImage, header.offset);
 
-	saveExtractedMessageToFile(extractedMessage->fileData, extractedMessage->length, extractedMessage->fileExtension, "out");
-	// FILE *message = getStream("./data/ejemplo2022/out.png");
-	
-	// // load the message length
-	// FILE *outputImage = fopen("lsb1.bmp", "w");
-	// if (outputImage == NULL) {
-	// 	exitWithError("Could not open output file.");
-	// }
+		StegMessageFormat_t *extractedMessage = lsb1Extract(coverImage, header.size, false);
 
-	// copyBmpHeaderAndOffset(bmpStream, outputImage, &header);
-	// lsb1Hide(bmpStream, message, outputImage, ".png", header.size - header.offset);
+		saveExtractedMessageToFile(extractedMessage->fileData, extractedMessage->length, extractedMessage->fileExtension,
+								   args.out);
+	}
 
-	// closeStream(bmpStream);
-	// closeStream(message);
-	// closeStream(outputImage);
+	closeStream(coverImage);
+	closeStream(outputImage);
+
 	return 0;
 }

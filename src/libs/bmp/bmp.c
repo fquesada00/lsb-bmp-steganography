@@ -24,17 +24,17 @@ void skipOffset(FILE *stream, uint32_t offset) {
 
 void copyBmpHeaderAndOffset(FILE *src, FILE *dest, BmpHeader *header) {
 	size_t bytesRead = fread((void *)header, 1, sizeof(BmpHeader), src);
-	
+
 	if (bytesRead != sizeof(BmpHeader)) {
 		fprintf(stderr, "Error reading bmp header");
 		exit(EXIT_FAILURE);
 	}
-	
+
 	fwrite((void *)header, 1, sizeof(BmpHeader), dest);
-	
+
 	size_t offsetSize = header->offset - sizeof(BmpHeader);
 	uint8_t dump[offsetSize];
-	
+
 	bytesRead = fread((void *)dump, 1, offsetSize, src);
 
 	if (bytesRead != offsetSize) {
@@ -42,5 +42,5 @@ void copyBmpHeaderAndOffset(FILE *src, FILE *dest, BmpHeader *header) {
 		exit(EXIT_FAILURE);
 	}
 
-	fwrite((void *)dump, 1, offsetSize, dest);	
+	fwrite((void *)dump, 1, offsetSize, dest);
 }

@@ -101,9 +101,6 @@ StegMessageFormat_t *lsb1Extract(FILE *image, long imageSize, bool isEncrypted) 
 	}
 	stegMsgFormat->fileExtension[k - 1] = '\0';
 
-	printf("%s\n", stegMsgFormat->fileExtension);
-	printf("%p\n", stegMsgFormat->fileExtension);
-
 	return stegMsgFormat;
 }
 

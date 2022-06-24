@@ -1,15 +1,12 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
-
 #include <stdint.h>
 #include <stdio.h>
 
 void exitWithError(char *message);
 
-FILE *getStream(char *path);
-
-FILE *createStream(char *name);
+FILE *createStream(char *path, const char *mode);
 
 int loadStream(FILE *stream, uint8_t *dest, size_t bytes);
 

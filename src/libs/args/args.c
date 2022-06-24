@@ -8,7 +8,7 @@
 
 extern char *optarg;
 
-void parseArgs(args_t *args, int argc, char *argv[]) {
+void parseArgs(Args_t *args, int argc, char *argv[]) {
 	int index = 0;
 
 	bool missingEmbed = true, missingIn = true, missingBitmap = true, missingOut = true, missingSteg = true;
@@ -75,5 +75,7 @@ void parseArgs(args_t *args, int argc, char *argv[]) {
 		fprintf(stderr, "Missing steg argument\n");
 		missingArgs = true;
 	}
-	if (missingArgs) { exit(EXIT_FAILURE); }
+	if (missingArgs) {
+		exit(EXIT_FAILURE);
+	}
 }

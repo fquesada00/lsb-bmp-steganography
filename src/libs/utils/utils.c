@@ -1,38 +1,22 @@
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
 void exitWithError(char *message) {
 	perror(message);
 	exit(EXIT_FAILURE);
 }
 
-FILE *getStream(char *path) {
+FILE *createStream(char *path, const char *mode) {
 	printf("Opening file %s\n", path);
-	FILE *stream = fopen(path, "r");
+	FILE *stream = fopen(path, mode);
 	if (stream == NULL) {
 		fprintf(stderr, "Error opening bmp file with path: %s\n", path);
 		exit(EXIT_FAILURE);
 	}
 	return stream;
-}
-
-FILE *createStream(char *name) {
-	printf("Creating file %s\n", name);
-	FILE *stream = fopen(name, "w");
-	if (stream == NULL) {
-		fprintf(stderr, "Error creating file with name: %s\n", name);
-		exit(EXIT_FAILURE);
-	}
-	return stream;
-}
-
-int loadStream(FILE *stream, uint8_t *dest, size_t bytes) {
-	// size_t bytesRead = fread((void *)dest, 1, bytes, stream);
-	// check if EOF is reached
-	return 0;
 }
 
 size_t saveStream(FILE *stream, uint8_t *src, size_t bytes) {
@@ -55,7 +39,7 @@ void saveExtractedMessageToFile(uint8_t *fileData, uint32_t fileLength, uint8_t 
 	strcpy(fileName, outputFileName);
 	strcat(fileName, (char *)fileExtension);
 
-	FILE *outStream = createStream(fileName);
+	FILE *outStream = createStream(fileName, "w");
 
 	saveStream(outStream, fileData, fileLength);
 
@@ -68,7 +52,7 @@ uint32_t getFileLength(FILE *stream) {
 	fseek(stream, 0L, SEEK_END);
 	long imageSize = ftell(stream);
 	rewind(stream);
-	return (uint32_t) imageSize;
+	return (uint32_t)imageSize;
 }
 
 uint8_t readByte(FILE *stream) {
@@ -82,7 +66,7 @@ uint8_t readByte(FILE *stream) {
 		fprintf(stderr, "Reached EOF reading byte from bmp file");
 		exit(EXIT_FAILURE);
 	}
-	
+
 	return byte;
 }
 
