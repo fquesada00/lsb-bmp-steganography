@@ -67,10 +67,10 @@ StegMessageFormat_t *lsbExtract(FILE *image, long imageSize, size_t lsbCount, bo
 	//  Read the message length
 	for (int i = 0; i < sizeof(messageLength); i++) {
 		messageLength |= readLsbByte(image, lsbCount);
-		printf("Message length: %d\n", messageLength);
 		if (i != sizeof(messageLength) - 1)
 			messageLength <<= BYTE_BITS;
 	}
+
 	if (imageSize < messageLength * BYTE_BITS) {
 		exitWithError("Extracted invalid length for hidden message.");
 	}

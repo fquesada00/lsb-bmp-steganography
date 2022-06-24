@@ -34,7 +34,7 @@ void closeStream(FILE *stream) {
 	}
 }
 
-void saveExtractedMessageToFile(uint8_t *fileData, uint32_t fileLength, uint8_t *fileExtension, char *outputFileName) {
+FILE *saveExtractedMessageToFile(uint8_t *fileData, uint32_t fileLength, uint8_t *fileExtension, char *outputFileName) {
 	// create new string with file name and extension
 
 	char *fileName = malloc(strlen(outputFileName) + strlen((char *)fileExtension) + 1);
@@ -45,8 +45,9 @@ void saveExtractedMessageToFile(uint8_t *fileData, uint32_t fileLength, uint8_t 
 
 	saveStream(outStream, fileData, fileLength);
 
-	closeStream(outStream);
 	free(fileName);
+
+	return outStream;
 }
 
 uint32_t getFileLength(FILE *stream) {
@@ -83,13 +84,18 @@ void writeByte(FILE *stream, uint8_t byte) {
 FILE *copyEncodedInputToFile(FILE *inputStream, char *extension) {
 	uint32_t inputLength = getFileLength(inputStream);
 
-	FILE *tmp = createStream(TMP_FILENAME, "r+");
+	FILE *tmp = createStream(TMP_FILENAME, "w+");
 
 	// cargamos los 4 bytes del largo del mensaje (de izquierda a derecha de a bytes)
-	fwrite(&inputLength, 1, sizeof(inputLength), tmp);
+	for(int i = 3; i >=0; i--) {
+		uint8_t byte = inputLength >> (i * 8);
+		writeByte(tmp, byte);
+	}
 
-	// cargamos el mensaje byte a byte
-	fwrite(inputStream, 1, inputLength, tmp);
+	// cargamos el mensaje byte a byte (ahora cargamos todo de una)
+	uint8_t bytes[inputLength];
+	fread(bytes, 1, inputLength, inputStream);
+	saveStream(tmp, bytes, inputLength);
 
 	// cargamos la extension
 	size_t extensionLength = strnlen(extension, MAX_FILENAME_LENGTH);

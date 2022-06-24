@@ -14,9 +14,10 @@ int main(int argc, char *argv[]) {
 
 	BmpHeader header = {0};
 	FILE *coverImage = createStream(args.bitmapFile, "r");
-	FILE *outputImage = createStream(args.out, "w");
+	FILE *outputImage = NULL;
 
 	if (args.embed) {
+		outputImage = createStream(args.out, "w");
 		FILE *inputMessage = createStream(args.in, "r");
 
 		copyBmpHeaderAndOffset(coverImage, outputImage, &header);
@@ -35,8 +36,8 @@ int main(int argc, char *argv[]) {
 		skipOffset(coverImage, header.offset);
 
 		StegMessageFormat_t *extractedMessage = lsbExtract(coverImage, header.size, 1, false);
-
-		saveExtractedMessageToFile(extractedMessage->fileData, extractedMessage->length, extractedMessage->fileExtension,
+		
+		outputImage = saveExtractedMessageToFile(extractedMessage->fileData, extractedMessage->length, extractedMessage->fileExtension,
 								   args.out);
 	}
 

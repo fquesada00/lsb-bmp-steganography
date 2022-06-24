@@ -57,4 +57,5 @@ stegobmp
 *.DS_Store
 
 *.png
+*.bmp
 !data/*
