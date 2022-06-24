@@ -83,14 +83,11 @@ void writeByte(FILE *stream, uint8_t byte) {
 
 FILE *copyEncodedInputToFile(FILE *inputStream, char *extension) {
 	uint32_t inputLength = getFileLength(inputStream);
-
+	uint32_t inputLengthBigEndian = htonl(inputLength);
 	FILE *tmp = createStream(TMP_FILENAME, "w+");
 
 	// cargamos los 4 bytes del largo del mensaje (de izquierda a derecha de a bytes)
-	for (int i = sizeof(inputLength) - 1; i >= 0; i--) {
-		uint8_t byte = inputLength >> (i * BYTE_BITS);
-		writeByte(tmp, byte);
-	}
+	fwrite(&inputLengthBigEndian, sizeof(inputLengthBigEndian), 1, tmp);
 
 	// cargamos el mensaje byte a byte (ahora cargamos todo de una)
 	uint8_t bytes[inputLength];
