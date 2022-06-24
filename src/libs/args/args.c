@@ -11,7 +11,7 @@ extern char *optarg;
 void parseArgs(Args_t *args, int argc, char *argv[]) {
 	int index = 0;
 
-	bool missingEmbed = true, missingIn = true, missingBitmap = true, missingOut = true, missingSteg = true;
+	bool missingBitmap = true, missingOut = true, missingSteg = true;
 
 	int option = getopt_long_only(argc, argv, "", longOptions, &index);
 
@@ -19,11 +19,9 @@ void parseArgs(Args_t *args, int argc, char *argv[]) {
 		switch (option) {
 			case EMBED:
 				args->embed = true;
-				missingEmbed = false;
 				break;
 			case IN:
 				strncpy(args->in, optarg, MAX_FILENAME_SIZE);
-				missingIn = false;
 				break;
 			case BITMAP:
 				strncpy(args->bitmapFile, optarg, MAX_FILENAME_SIZE);
@@ -55,14 +53,6 @@ void parseArgs(Args_t *args, int argc, char *argv[]) {
 
 	bool missingArgs = false;
 
-	if (missingEmbed) {
-		fprintf(stderr, "Missing embed argument\n");
-		missingArgs = true;
-	}
-	if (missingIn) {
-		fprintf(stderr, "Missing in argument\n");
-		missingArgs = true;
-	}
 	if (missingBitmap) {
 		fprintf(stderr, "Missing bitmap argument\n");
 		missingArgs = true;
