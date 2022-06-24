@@ -14,7 +14,8 @@ FILE *createStream(char *path, const char *mode) {
 	printf("Opening file %s\n", path);
 	FILE *stream = fopen(path, mode);
 	if (stream == NULL) {
-		fprintf(stderr, "Error opening bmp file with path: %s\n", path);
+		perror("ERROR");
+		fprintf(stderr, "Error opening file with path: %s\n", path);
 		exit(EXIT_FAILURE);
 	}
 	return stream;
@@ -60,11 +61,11 @@ uint8_t readByte(FILE *stream) {
 	uint8_t byte;
 	fread(&byte, 1, 1, stream);
 	if (ferror(stream) != 0) {
-		fprintf(stderr, "Error reading byte from bmp file");
+		fprintf(stderr, "Error reading byte from file");
 		exit(EXIT_FAILURE);
 	}
 	if (feof(stream) != 0) {
-		fprintf(stderr, "Reached EOF reading byte from bmp file");
+		fprintf(stderr, "Reached EOF reading byte from file");
 		exit(EXIT_FAILURE);
 	}
 
@@ -74,7 +75,7 @@ uint8_t readByte(FILE *stream) {
 void writeByte(FILE *stream, uint8_t byte) {
 	fwrite(&byte, 1, 1, stream);
 	if (ferror(stream) != 0) {
-		fprintf(stderr, "Error writing byte to bmp file");
+		fprintf(stderr, "Error writing byte to file");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -82,7 +83,7 @@ void writeByte(FILE *stream, uint8_t byte) {
 FILE *copyEncodedInputToFile(FILE *inputStream, char *extension) {
 	uint32_t inputLength = getFileLength(inputStream);
 
-	FILE *tmp = createStream(TMP_FILENAME, "rw");
+	FILE *tmp = createStream(TMP_FILENAME, "r+");
 
 	// cargamos los 4 bytes del largo del mensaje (de izquierda a derecha de a bytes)
 	fwrite(&inputLength, 1, sizeof(inputLength), tmp);

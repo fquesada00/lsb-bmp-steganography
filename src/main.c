@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 
 		FILE *encodedInput = copyEncodedInputToFile(inputMessage, ".png");
 
-		lsb1Hide(coverImage, encodedInput, outputImage, header.size - header.offset);
+		lsbHide(coverImage, encodedInput, outputImage, header.size - header.offset, 1);
 
 		closeStream(inputMessage);
 		closeStream(encodedInput);
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 		loadHeader(coverImage, &header);
 		skipOffset(coverImage, header.offset);
 
-		StegMessageFormat_t *extractedMessage = lsb1Extract(coverImage, header.size, false);
+		StegMessageFormat_t *extractedMessage = lsbExtract(coverImage, header.size, 1, false);
 
 		saveExtractedMessageToFile(extractedMessage->fileData, extractedMessage->length, extractedMessage->fileExtension,
 								   args.out);

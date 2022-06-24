@@ -8,7 +8,7 @@
 #include <string.h>
 #include <utils.h>
 
-void lsb1Hide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverImageLength) {
+void lsbHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverImageLength, size_t lsbCount) {
 
 	uint32_t messageLength = getFileLength(input);
 
@@ -19,15 +19,15 @@ void lsb1Hide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverIm
 	// cargamos el mensaje byte a byte
 	for (int i = 0; i < messageLength; i++) {
 		uint8_t messageByte = readByte(input);
-		writeLsb1Byte(coverImage, outputImage, messageByte);
+		writeLsbByte(coverImage, outputImage, messageByte, lsbCount);
 	}
 
 	// cargamos los bytes restantes del archivo
 	uint32_t remainingLength = coverImageLength - messageLength * BYTE_BITS;
-	uint8_t *remainingBytes = (uint8_t *)malloc(remainingLength);
+	uint8_t dump[remainingLength];
 	// TODO: Check	errors
-	fread(remainingBytes, 1, remainingLength, coverImage);
-	fwrite(remainingBytes, 1, remainingLength, outputImage);
+	fread((void *)dump, 1, remainingLength, coverImage);
+	fwrite((void *)dump, 1, remainingLength, outputImage);
 }
 
 void writeLsb1Byte(FILE *src, FILE *dest, uint8_t messageByte) {
@@ -40,16 +40,35 @@ void writeLsb1Byte(FILE *src, FILE *dest, uint8_t messageByte) {
 	}
 }
 
-StegMessageFormat_t *lsb1Extract(FILE *image, long imageSize, bool isEncrypted) {
+void writeLsbByte(FILE *src, FILE *dest, uint8_t messageByte, size_t lsbCount) {
+	if (lsbCount > BYTE_BITS) {
+		exitWithError("LSB count cannot be bigger than a byte");
+	}
+
+	if (BYTE_BITS % lsbCount != 0) {
+		exitWithError("LSB count must be a divisor of 8");
+	}
+
+	uint8_t mask = BIT_MASK(uint8_t, lsbCount);
+	int bytes = BYTE_BITS / lsbCount;
+
+	for (int i = bytes - 1; i >= 0; i--) {
+		uint8_t imageByte = readByte(src);
+		uint8_t lsbs = (messageByte >> (lsbCount * i)) & mask;
+		imageByte &= ~mask;
+		imageByte |= lsbs;
+		writeByte(dest, imageByte);
+	}
+}
+
+StegMessageFormat_t *lsbExtract(FILE *image, long imageSize, size_t lsbCount, bool isEncrypted) {
 	uint32_t messageLength = 0;
 
 	// Read the message length
-	int i;
-	for (i = 0; i < sizeof(messageLength) * BYTE_BITS; i++) {
-		uint8_t messageByte = readByte(image);
-		messageLength |= messageByte & 0x01;
-		if (i != (sizeof(messageLength) * BYTE_BITS - 1))
-			messageLength <<= 1;
+	for (int i = 0; i < sizeof(messageLength); i++) {
+		messageLength |= readLsbByte(image, lsbCount);
+		if (i != sizeof(messageLength) - 1)
+			messageLength <<= BYTE_BITS;
 	}
 
 	if (imageSize < messageLength * BYTE_BITS) {
@@ -58,9 +77,8 @@ StegMessageFormat_t *lsb1Extract(FILE *image, long imageSize, bool isEncrypted) 
 
 	// Read the message
 	uint8_t *message = malloc(messageLength);
-	int j;
-	for (j = 0; j < messageLength; j++) {
-		uint8_t messageByte = readLsb1Byte(image);
+	for (int j = 0; j < messageLength; j++) {
+		uint8_t messageByte = readLsbByte(image, lsbCount);
 		message[j] = messageByte;
 	}
 
@@ -77,10 +95,9 @@ StegMessageFormat_t *lsb1Extract(FILE *image, long imageSize, bool isEncrypted) 
 	stegMsgFormat->fileExtension = malloc(sizeof(uint8_t));
 	uint8_t c;
 	int k = 1;
-	while (i < (imageSize - BYTE_BITS) && (c = readLsb1Byte(image)) != '\0') {
+	while ((c = readLsbByte(image, lsbCount)) != '\0') {
 		stegMsgFormat->fileExtension = realloc(stegMsgFormat->fileExtension, sizeof(uint8_t) * (k + 1));
 		stegMsgFormat->fileExtension[k - 1] = c;
-		i += BYTE_BITS;
 		k++;
 	}
 	stegMsgFormat->fileExtension[k - 1] = '\0';
@@ -97,4 +114,26 @@ uint8_t readLsb1Byte(FILE *src) {
 			lsb1Byte <<= 1;
 	}
 	return lsb1Byte;
+}
+
+uint8_t readLsbByte(FILE *src, size_t lsbCount) {
+	if (lsbCount > BYTE_BITS) {
+		exitWithError("LSB count cannot be bigger than a byte");
+	}
+
+	if (BYTE_BITS % lsbCount != 0) {
+		exitWithError("LSB count must be a divisor of 8");
+	}
+
+	uint8_t mask = BIT_MASK(uint8_t, lsbCount);
+	int bytes = BYTE_BITS / lsbCount;
+
+	uint8_t ret = 0;
+	for (int i = 0; i < bytes; i++) {
+		uint8_t messageByte = readByte(src);
+		ret |= messageByte & mask;
+		if (i != (bytes - 1))
+			ret <<= lsbCount;
+	}
+	return ret;
 }

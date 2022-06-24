@@ -7,6 +7,6 @@
 #define PIXEL_SIZE 24 // 3 * COLOR_SIZE
 #define BYTE_BITS 8
 #define MAX_FILENAME_LENGTH 255
-#define TMP_FILENAME "tmp_input.tmp"
+#define TMP_FILENAME "tmp"
 
 #endif

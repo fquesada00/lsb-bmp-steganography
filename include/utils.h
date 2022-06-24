@@ -1,8 +1,12 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
+#include <constants.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#define BIT_MASK(__TYPE__, __ONE_COUNT__)                                                                                        \
+	((__TYPE__)(-((__ONE_COUNT__) != 0))) & (((__TYPE__)-1) >> ((sizeof(__TYPE__) * BYTE_BITS) - (__ONE_COUNT__)))
 
 void exitWithError(char *message);
 
