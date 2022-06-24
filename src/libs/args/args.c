@@ -20,7 +20,8 @@ static struct option longOptions[] = {
 void parseArgs(Args_t *args, int argc, char *argv[]) {
 	int index = 0;
 
-	bool missingBitmap = true, missingOut = true, missingSteg = true, missingPass = true, missingBlock = true, missingMode = true;
+	bool missingEmbed = true, missingExtract = true, missingBitmap = true, missingOut = true, missingSteg = true,
+		 missingPass = true, missingBlock = true, missingMode = true;
 
 	int option = getopt_long_only(argc, argv, "", longOptions, &index);
 
@@ -28,9 +29,11 @@ void parseArgs(Args_t *args, int argc, char *argv[]) {
 		switch (option) {
 			case EMBED:
 				args->embed = true;
+				missingEmbed = false;
 				break;
 			case EXTRACT:
 				args->extract = true;
+				missingExtract = false;
 				break;
 			case IN:
 				strncpy(args->in, optarg, MAX_FILENAME_SIZE);
@@ -113,6 +116,11 @@ void parseArgs(Args_t *args, int argc, char *argv[]) {
 	} else if (!missingPass && !missingMode && missingBlock) {
 		fprintf(stderr, "Missing block cipher algorithm for encryption. Defaulting to AES128\n");
 		args->blockCipher = AES128;
+	}
+
+	if (missingEmbed && missingExtract) {
+		fprintf(stderr, "Missing embed or extract option\n");
+		missingArgs = true;
 	}
 
 	if (missingBitmap) {
