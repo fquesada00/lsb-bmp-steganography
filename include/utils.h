@@ -18,7 +18,7 @@ size_t saveStream(FILE *stream, uint8_t *src, size_t bytes);
 
 void closeStream(FILE *stream);
 
-FILE *saveExtractedMessageToFile(uint8_t *fileData, uint32_t fileLength, uint8_t *fileExtension, char *outputFileName);
+FILE *saveExtractedMessageToFile(uint8_t *extractedMessage, uint32_t length, char *outputFileName);
 
 uint32_t getFileLength(FILE *stream);
 

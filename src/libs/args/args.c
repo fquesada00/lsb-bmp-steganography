@@ -101,6 +101,10 @@ void parseArgs(Args_t *args, int argc, char *argv[]) {
 
 	bool missingArgs = false;
 
+	if (missingPass) {
+		args->password[0] = '\0';
+	}
+
 	// catch default arguments for encryption
 	if (missingPass && !(missingMode && missingBlock)) {
 		fprintf(stderr, "Missing password for encryption\n");

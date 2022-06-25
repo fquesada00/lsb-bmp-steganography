@@ -1,14 +1,15 @@
 #include <crypto.h>
 #include <openssl/evp.h>
+#include <stdio.h>
 #include <string.h>
 #include <utils.h>
 
 static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation);
-static uint8_t **deriveKeyAndIv(char *password, EVP_CIPHER *cipher);
-static int encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, int plaintext_len, uint8_t *key, uint8_t *iv,
-				   unsigned char *ciphertext);
-static int decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, int ciphertext_len, uint8_t *key, uint8_t *iv,
-				   unsigned char *plaintext);
+static void deriveKeyAndIv(char *password, EVP_CIPHER *cipher, uint8_t *keyAndIv);
+static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, size_t plaintextLen, uint8_t *key, uint8_t *iv,
+					  unsigned char *ciphertext);
+static size_t decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, size_t ciphertext_len, uint8_t *key, uint8_t *iv,
+					  unsigned char *plaintext);
 
 static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
 	EVP_CIPHER *cipher = NULL;
@@ -94,35 +95,26 @@ static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_
 }
 
 // Returns dynamically allocated key and IV.
-static uint8_t **deriveKeyAndIv(char *password, EVP_CIPHER *cipher) {
+static void deriveKeyAndIv(char *password, EVP_CIPHER *cipher, uint8_t *keyAndIv) {
 	int keyLength = EVP_CIPHER_key_length(cipher);
 	int ivLength = EVP_CIPHER_iv_length(cipher);
 
-	uint8_t out[keyLength + ivLength];
 	const unsigned char *salt = (unsigned char *)"";
 
 	if (!PKCS5_PBKDF2_HMAC(password, strlen(password), salt, strlen((char *)salt), 1000, EVP_sha256(), keyLength + ivLength,
-						   out)) {
+						   keyAndIv)) {
 		exitWithError("PKCS5_PBKDF2_HMAC failed while deriving key and IV\n");
 	}
-
-	uint8_t **keyAndIv = malloc(sizeof(uint8_t *) * 2);
-	keyAndIv[0] = malloc(keyLength);
-	keyAndIv[1] = malloc(ivLength);
-
-	memcpy(keyAndIv, out, keyLength + ivLength);
-
-	return keyAndIv;
 }
 
 // Fuente: https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
-static int encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, int plaintext_len, uint8_t *key, uint8_t *iv,
-				   unsigned char *ciphertext) {
+static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, size_t plaintextLen, uint8_t *key, uint8_t *iv,
+					  unsigned char *ciphertext) {
 	EVP_CIPHER_CTX *ctx;
 
 	int len;
 
-	int ciphertext_len;
+	size_t ciphertext_len;
 
 	/* Create and initialise the context */
 	if (!(ctx = EVP_CIPHER_CTX_new()))
@@ -141,7 +133,7 @@ static int encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, int plaintext_len, ui
 	 * Provide the message to be encrypted, and obtain the encrypted output.
 	 * EVP_EncryptUpdate can be called multiple times if necessary
 	 */
-	if (1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
+	if (1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintextLen))
 		exitWithError("Error encrypting\n");
 	ciphertext_len = len;
 
@@ -159,12 +151,13 @@ static int encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, int plaintext_len, ui
 	return ciphertext_len;
 }
 
-static int decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, int ciphertext_len, uint8_t *key, uint8_t *iv, uint8_t *plaintext) {
+static size_t decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, size_t ciphertext_len, uint8_t *key, uint8_t *iv,
+					  uint8_t *plaintext) {
 	EVP_CIPHER_CTX *ctx;
 
 	int len;
 
-	int plaintext_len;
+	size_t plaintextLen;
 
 	/* Create and initialise the context */
 	if (!(ctx = EVP_CIPHER_CTX_new()))
@@ -185,7 +178,7 @@ static int decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, int ciphertext_len, 
 	 */
 	if (1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
 		exitWithError("Error decrypting\n");
-	plaintext_len = len;
+	plaintextLen = len;
 
 	/*
 	 * Finalise the decryption. Further plaintext bytes may be written at
@@ -193,22 +186,25 @@ static int decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, int ciphertext_len, 
 	 */
 	if (1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len))
 		exitWithError("Error finalising decryption\n");
-	plaintext_len += len;
+	plaintextLen += len;
 
 	/* Clean up */
 	EVP_CIPHER_CTX_free(ctx);
 
-	return plaintext_len;
+	return plaintextLen;
 }
 
 void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
-
 	EVP_CIPHER *cipher = getCipherFunction(blockCipher, modeOfOperation);
 	uint32_t blockSize = EVP_CIPHER_block_size(cipher);
 
-	uint8_t **keyAndIv = deriveKeyAndIv(password, cipher);
-	uint8_t *key = keyAndIv[0];
-	uint8_t *iv = keyAndIv[1];
+	uint32_t keyLength = EVP_CIPHER_key_length(cipher);
+	uint32_t ivLength = EVP_CIPHER_iv_length(cipher);
+
+	uint8_t keyAndIv[keyLength + ivLength];
+	deriveKeyAndIv(password, cipher, keyAndIv);
+	uint8_t *key = keyAndIv;
+	uint8_t *iv = keyAndIv + keyLength;
 
 	uint32_t fileLength = getFileLength(file);
 	uint8_t plainText[fileLength];
@@ -216,10 +212,35 @@ void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOp
 	uint8_t cipherText[cipherTextLength];
 
 	fread(plainText, sizeof(uint8_t), fileLength, file);
-
-	uint32_t cipherTextOffset = encrypt(cipher, plainText, fileLength, key, iv, cipherText);
-
 	rewind(file);
 
+	uint32_t cipherTextOffset = encrypt(cipher, plainText, fileLength, key, iv, cipherText);
+	uint32_t cipherTextOffsetBigEndian = htonl(cipherTextOffset);
+
+	// Write ciphertext length to file
+	fwrite(&cipherTextOffsetBigEndian, sizeof(uint32_t), 1, file);
+	// Write ciphertext to file
 	fwrite(cipherText, sizeof(uint8_t), cipherTextOffset, file);
+}
+
+size_t decryptFile(uint8_t *cipherText, size_t cipherTextLength, uint8_t *plainText, char *password, BlockCipher_t blockCipher,
+				   ModeOfOperation_t modeOfOperation) {
+	EVP_CIPHER *cipher = getCipherFunction(blockCipher, modeOfOperation);
+
+	size_t keyLength = EVP_CIPHER_key_length(cipher);
+	size_t ivLength = EVP_CIPHER_iv_length(cipher);
+
+	uint8_t keyAndIv[keyLength + ivLength];
+	deriveKeyAndIv(password, cipher, keyAndIv);
+	uint8_t *key = keyAndIv;
+	uint8_t *iv = keyAndIv + keyLength;
+	uint8_t dest[keyLength + 1];
+	strncpy(dest, key, keyLength);
+	dest[keyLength] = '\0';
+
+	printf("Key %s -- IV %s", dest, iv);
+	// Write plaintext to output buffer
+	size_t plainTextLength = decrypt(cipher, cipherText, cipherTextLength, key, iv, plainText);
+
+	return plainTextLength;
 }

@@ -34,18 +34,34 @@ void closeStream(FILE *stream) {
 	}
 }
 
-FILE *saveExtractedMessageToFile(uint8_t *fileData, uint32_t fileLength, uint8_t *fileExtension, char *outputFileName) {
-	// create new string with file name and extension
+FILE *saveExtractedMessageToFile(uint8_t *extractedMessage, uint32_t length, char *outputFileName) {
+	// Parse extracted message
+	uint8_t *message = extractedMessage;
+	uint32_t messageLength = ntohl(((uint32_t *)message)[0]);
 
-	char *fileName = malloc(strlen(outputFileName) + strlen((char *)fileExtension) + 1);
+	// Parse file extension
+	uint8_t *fileExtension = message + sizeof(messageLength) + messageLength;
+	if (strnlen((char *)fileExtension, MAX_FILENAME_SIZE + 1) > MAX_FILENAME_SIZE) {
+		fprintf(stderr, "Error: File extension in extracted message is too long or may not be null terminated\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// Check file extensions starts with .
+	if (((char)fileExtension[0]) != '.') {
+		fprintf(stderr, "Error: File extension in extracted message does not start with a dot\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// create new string with file name and extension
+	size_t fileNameLength = strlen(outputFileName) + strlen((char *)fileExtension) + 1;
+	char fileName[fileNameLength];
+
 	strcpy(fileName, outputFileName);
 	strcat(fileName, (char *)fileExtension);
 
 	FILE *outStream = createStream(fileName, "w");
 
-	saveStream(outStream, fileData, fileLength);
-
-	free(fileName);
+	saveStream(outStream, extractedMessage + sizeof(messageLength), messageLength);
 
 	return outStream;
 }

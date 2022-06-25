@@ -25,9 +25,15 @@ int main(int argc, char *argv[]) {
 
 		FILE *encodedInputTmp = copyEncodedInputToFile(inputMessage, ".png");
 
-		// if (args.password) {
-		// 	encryptFile(encodedInputTmp, args.password, args.blockCipher, args.modeOfOperation);
-		// }
+		if (strlen(args.password) > 0) {
+			encryptFile(encodedInputTmp, args.password, args.blockCipher, args.modeOfOperation);
+
+			FILE *cryptoFile = fopen("./cryptoEmbed.txt", "w");
+			uint8_t auxBuff[header.size];
+			fread(auxBuff, sizeof(uint8_t), header.size, encodedInputTmp);
+			fwrite(auxBuff, sizeof(uint8_t), header.size, cryptoFile);
+			fclose(cryptoFile);
+		}
 
 		if (args.steganographyMode == LSB1 || args.steganographyMode == LSB4) {
 			lsbHide(coverImage, encodedInputTmp, outputImage, header.size - header.offset, getLsbCount(args.steganographyMode));
@@ -43,11 +49,24 @@ int main(int argc, char *argv[]) {
 		skipOffset(coverImage, header.offset);
 
 		if (args.steganographyMode == LSB1 || args.steganographyMode == LSB4) {
-			StegMessageFormat_t *extractedMessage =
-				lsbExtract(coverImage, header.size, getLsbCount(args.steganographyMode), false);
+			size_t lsbCount = getLsbCount(args.steganographyMode);
+			uint32_t outputByteSize = BYTE_BITS / lsbCount;
 
-			outputImage = saveExtractedMessageToFile(extractedMessage->fileData, extractedMessage->length,
-													 extractedMessage->fileExtension, args.out);
+			uint8_t extractedMessage[header.size / outputByteSize];
+			bool isEncrypted = strlen(args.password) > 0;
+			size_t extractedLength = lsbExtract(coverImage, header.size, extractedMessage, lsbCount, isEncrypted);
+
+			uint8_t plainText[extractedLength];
+			if (isEncrypted) {
+				FILE *cryptoFile = fopen("./cryptoExtracted.txt", "w");
+				fwrite(extractedMessage, sizeof(uint8_t), extractedLength, cryptoFile);
+				fclose(cryptoFile);
+				extractedLength = decryptFile(extractedMessage, extractedLength, plainText, args.password, args.blockCipher,
+											  args.modeOfOperation);
+				memcpy(extractedMessage, plainText, extractedLength);
+			}
+
+			outputImage = saveExtractedMessageToFile(extractedMessage, extractedLength, args.out);
 		}
 	}
 
