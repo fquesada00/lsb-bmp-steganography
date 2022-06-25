@@ -24,8 +24,9 @@ int main(int argc, char *argv[]) {
 
 		copyBmpHeaderAndOffset(coverImage, outputImage, &header);
 
-		// TODO: sacar el hardcodeo de la extension
-		FILE *encodedInputTmp = copyEncodedInputToFile(inputMessage, ".png");
+		char *extension = strchr(args.in, '.');
+
+		FILE *encodedInputTmp = copyEncodedInputToFile(inputMessage, extension);
 
 		bool encrypt = strlen(args.password) > 0;
 		if (encrypt) {

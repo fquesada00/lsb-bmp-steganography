@@ -19,7 +19,6 @@ typedef struct Args_t {
 	BlockCipher_t blockCipher;
 	ModeOfOperation_t modeOfOperation;
 	char password[MAX_PASSWORD_LENGTH];
-	// TODO: Add encryption mode
 } Args_t;
 
 void parseArgs(Args_t *args, int argc, char *argv[]);

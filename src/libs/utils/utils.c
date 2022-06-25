@@ -30,8 +30,7 @@ size_t saveStream(FILE *stream, uint8_t *src, size_t bytes) {
 void closeStream(FILE *stream) {
 	int result = fclose(stream);
 	if (result != 0) {
-		fprintf(stderr, "Error close bmp stream");
-		exit(EXIT_FAILURE);
+		exitWithError("Error close bmp stream");
 	}
 }
 
@@ -43,14 +42,12 @@ FILE *saveExtractedMessageToFile(uint8_t *extractedMessage, uint32_t length, cha
 	// Parse file extension
 	uint8_t *fileExtension = message + sizeof(messageLength) + messageLength;
 	if (strnlen((char *)fileExtension, MAX_FILENAME_SIZE + 1) > MAX_FILENAME_SIZE) {
-		fprintf(stderr, "Error: File extension in extracted message is too long or may not be null terminated\n");
-		exit(EXIT_FAILURE);
+		exitWithError("Error: File extension in extracted message is too long or may not be null terminated\n");
 	}
 
 	// Check file extensions starts with .
 	if (((char)fileExtension[0]) != '.') {
-		fprintf(stderr, "Error: File extension in extracted message does not start with a dot\n");
-		exit(EXIT_FAILURE);
+		exitWithError("Error: File extension in extracted message does not start with a dot\n");
 	}
 
 	// create new string with file name and extension
@@ -80,12 +77,10 @@ uint8_t readByte(FILE *stream) {
 	uint8_t byte;
 	fread(&byte, 1, 1, stream);
 	if (ferror(stream) != 0) {
-		fprintf(stderr, "Error reading byte from file");
-		exit(EXIT_FAILURE);
+		exitWithError("Error reading byte from file");
 	}
 	if (feof(stream) != 0) {
-		fprintf(stderr, "Reached EOF reading byte from file");
-		exit(EXIT_FAILURE);
+		exitWithError("Reached EOF reading byte from file");
 	}
 
 	return byte;
@@ -94,8 +89,7 @@ uint8_t readByte(FILE *stream) {
 void writeByte(FILE *stream, uint8_t byte) {
 	fwrite(&byte, 1, 1, stream);
 	if (ferror(stream) != 0) {
-		fprintf(stderr, "Error writing byte to file");
-		exit(EXIT_FAILURE);
+		exitWithError("Error writing byte to file");
 	}
 }
 

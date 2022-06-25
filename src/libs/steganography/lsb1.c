@@ -32,9 +32,19 @@ void lsbNHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverIm
 	// cargamos los bytes restantes del archivo
 	uint32_t remainingLength = coverImageLength - messageLength * outputByteSize;
 	uint8_t *dump = calloc(remainingLength, sizeof(uint8_t));
-	// TODO: Check	errors
+
 	fread((void *)dump, 1, remainingLength, coverImage);
+
+	if (ferror(coverImage) != 0) {
+		exitWithError("Error reading from cover image");
+	}
+
 	fwrite((void *)dump, 1, remainingLength, outputImage);
+
+	if (ferror(coverImage) != 0) {
+		exitWithError("Error writing from cover image");
+	}
+
 	free(dump);
 }
 
@@ -86,6 +96,7 @@ size_t lsbExtract(FILE *image, long imageSize, uint8_t *extractedMessage, Stegan
 		default:
 			exitWithError("Invalid steganography mode");
 	}
+	return 0;
 }
 
 static size_t lsbNExtract(FILE *image, long imageSize, uint8_t *extractedMessage, size_t n, bool isEncrypted) {

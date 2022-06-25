@@ -69,6 +69,7 @@ const static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOper
 		default:
 			exitWithError("Invalid block cipher\n");
 	}
+	return NULL;
 }
 
 // Returns dynamically allocated key and IV.
