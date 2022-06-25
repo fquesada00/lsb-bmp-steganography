@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
 
 		copyBmpHeaderAndOffset(coverImage, outputImage, &header);
 
+		// TODO: sacar el hardcodeo de la extension
 		FILE *encodedInputTmp = copyEncodedInputToFile(inputMessage, ".png");
 
 		if (strlen(args.password) > 0) {
@@ -45,7 +46,8 @@ int main(int argc, char *argv[]) {
 
 		uint8_t extractedMessage[header.size / outputByteSize];
 		bool isEncrypted = strlen(args.password) > 0;
-		size_t extractedLength = lsbExtract(coverImage, header.size, extractedMessage, args.steganographyMode, isEncrypted);
+		size_t extractedLength = lsbExtract(coverImage, header.size /*no deberia ser header.size - header.offset ?????*/,
+											extractedMessage, args.steganographyMode, isEncrypted);
 
 		uint8_t plainText[extractedLength];
 		if (isEncrypted) {

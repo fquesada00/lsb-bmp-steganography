@@ -1,3 +1,4 @@
+#include <arpa/inet.h>
 #include <constants.h>
 #include <stdbool.h>
 #include <stdint.h>

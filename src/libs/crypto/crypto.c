@@ -1,3 +1,4 @@
+#include <arpa/inet.h>
 #include <crypto.h>
 #include <openssl/evp.h>
 #include <stdio.h>
@@ -5,7 +6,7 @@
 #include <utils.h>
 
 static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation);
-static void deriveKeyAndIv(char *password, EVP_CIPHER *cipher, uint8_t *keyAndIv);
+static void deriveKeyAndIv(char *password, EVP_CIPHER *cipher, uint8_t *key, uint8_t *iv);
 static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plainText, size_t plainTextLen, uint8_t *key, uint8_t *iv,
 					  unsigned char *cipherText);
 static size_t decrypt(EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherTextLen, uint8_t *key, uint8_t *iv,
@@ -95,14 +96,13 @@ static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_
 }
 
 // Returns dynamically allocated key and IV.
-static void deriveKeyAndIv(char *password, EVP_CIPHER *cipher, uint8_t *keyAndIv) {
+static void deriveKeyAndIv(char *password, EVP_CIPHER *cipher, uint8_t *key, uint8_t *iv) {
 	int keyLength = EVP_CIPHER_key_length(cipher);
 	int ivLength = EVP_CIPHER_iv_length(cipher);
 
 	const unsigned char *salt = (unsigned char *)"";
 
-	if (!PKCS5_PBKDF2_HMAC(password, strlen(password), salt, strlen((char *)salt), 1000, EVP_sha256(), keyLength + ivLength,
-						   keyAndIv)) {
+	if (!EVP_BytesToKey(cipher, EVP_sha256(), NULL, (unsigned char *)password, strlen(password), 1, key, iv)) {
 		exitWithError("PKCS5_PBKDF2_HMAC failed while deriving key and IV\n");
 	}
 }
@@ -184,6 +184,7 @@ static size_t decrypt(EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherText
 	 * Finalise the decryption. Further plainText bytes may be written at
 	 * this stage.
 	 */
+	printf("%d\n", plainTextLen);
 	if (1 != EVP_DecryptFinal_ex(ctx, plainText + len, &len))
 		exitWithError("Error finalising decryption\n");
 	plainTextLen += len;
@@ -201,10 +202,9 @@ void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOp
 	uint32_t keyLength = EVP_CIPHER_key_length(cipher);
 	uint32_t ivLength = EVP_CIPHER_iv_length(cipher);
 
-	uint8_t keyAndIv[keyLength + ivLength];
-	deriveKeyAndIv(password, cipher, keyAndIv);
-	uint8_t *key = keyAndIv;
-	uint8_t *iv = keyAndIv + keyLength;
+	uint8_t key[keyLength];
+	uint8_t iv[ivLength];
+	deriveKeyAndIv(password, cipher, key, iv);
 
 	// Write plainText to output buffer
 	uint32_t fileLength = getFileLength(file);
@@ -234,10 +234,9 @@ size_t decryptFile(uint8_t *cipherText, size_t cipherTextLength, uint8_t *plainT
 	size_t keyLength = EVP_CIPHER_key_length(cipher);
 	size_t ivLength = EVP_CIPHER_iv_length(cipher);
 
-	uint8_t keyAndIv[keyLength + ivLength];
-	deriveKeyAndIv(password, cipher, keyAndIv);
-	uint8_t *key = keyAndIv;
-	uint8_t *iv = keyAndIv + keyLength;
+	uint8_t key[keyLength];
+	uint8_t iv[ivLength];
+	deriveKeyAndIv(password, cipher, key, iv);
 
 	size_t plainTextLength = decrypt(cipher, cipherText, cipherTextLength, key, iv, plainText);
 
