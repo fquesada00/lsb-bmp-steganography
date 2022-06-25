@@ -7,7 +7,7 @@ HEADERS     := include
 BUILDDIR    := obj
 
 #Flags, Libraries and Includes
-LDFLAGS=#-fsanitize=address
+LDFLAGS=-fsanitize=address
 CFLAGS=-std=c99 -Wall -pedantic -D_GNU_SOURCE #-Werror
 CPPFLAGS := -I$(HEADERS)
 LCRYPTO=-lcrypto
