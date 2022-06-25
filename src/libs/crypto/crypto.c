@@ -5,105 +5,81 @@
 #include <string.h>
 #include <utils.h>
 
-static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation);
-static void deriveKeyAndIv(char *password, EVP_CIPHER *cipher, uint8_t *key, uint8_t *iv);
-static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plainText, size_t plainTextLen, uint8_t *key, uint8_t *iv,
+const static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation);
+static void deriveKeyAndIv(char *password, const EVP_CIPHER *cipher, uint8_t *key, uint8_t *iv);
+static size_t encrypt(const EVP_CIPHER *cipher, uint8_t *plainText, size_t plainTextLen, uint8_t *key, uint8_t *iv,
 					  unsigned char *cipherText);
-static size_t decrypt(EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherTextLen, uint8_t *key, uint8_t *iv,
+static size_t decrypt(const EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherTextLen, uint8_t *key, uint8_t *iv,
 					  unsigned char *plainText);
 
-static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
-	EVP_CIPHER *cipher = NULL;
-
+const static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
 	switch (blockCipher) {
 		case AES128:
 			switch (modeOfOperation) {
 				case ECB:
-					cipher = EVP_aes_128_ecb();
-					break;
+					return EVP_aes_128_ecb();
 				case CBC:
-					cipher = EVP_aes_128_cbc();
-					break;
+					return EVP_aes_128_cbc();
 				case CFB:
-					cipher = EVP_aes_128_cfb8();
-					break;
+					return EVP_aes_128_cfb8();
 				case OFB:
-					cipher = EVP_aes_128_ofb();
-					break;
+					return EVP_aes_128_ofb();
 				default:
 					exitWithError("Invalid mode of operation\n");
 			}
-			break;
 		case AES192:
 			switch (modeOfOperation) {
 				case ECB:
-					cipher = EVP_aes_192_ecb();
-					break;
+					return EVP_aes_192_ecb();
 				case CBC:
-					cipher = EVP_aes_192_cbc();
-					break;
+					return EVP_aes_192_cbc();
 				case CFB:
-					cipher = EVP_aes_192_cfb8();
-					break;
+					return EVP_aes_192_cfb8();
 				case OFB:
-					cipher = EVP_aes_192_ofb();
-					break;
+					return EVP_aes_192_ofb();
 				default:
 					exitWithError("Invalid mode of operation\n");
 			}
-			break;
 		case AES256:
 			switch (modeOfOperation) {
 				case ECB:
-					cipher = EVP_aes_256_ecb();
-					break;
+					return EVP_aes_256_ecb();
 				case CBC:
-					cipher = EVP_aes_256_cbc();
-					break;
+					return EVP_aes_256_cbc();
 				case CFB:
-					cipher = EVP_aes_256_cfb8();
-					break;
+					return EVP_aes_256_cfb8();
 				case OFB:
-					cipher = EVP_aes_256_ofb();
-					break;
+					return EVP_aes_256_ofb();
 				default:
 					exitWithError("Invalid mode of operation\n");
 			}
-			break;
 		case DES:
 			switch (modeOfOperation) {
 				case ECB:
-					cipher = EVP_des_ecb();
-					break;
+					return EVP_des_ecb();
 				case CBC:
-					cipher = EVP_des_cbc();
-					break;
+					return EVP_des_cbc();
 				case CFB:
-					cipher = EVP_des_cfb8();
-					break;
+					return EVP_des_cfb8();
 				case OFB:
-					cipher = EVP_des_ofb();
-					break;
+					return EVP_des_ofb();
 				default:
 					exitWithError("Invalid mode of operation\n");
 			}
-			break;
 		default:
 			exitWithError("Invalid block cipher\n");
 	}
-
-	return cipher;
 }
 
 // Returns dynamically allocated key and IV.
-static void deriveKeyAndIv(char *password, EVP_CIPHER *cipher, uint8_t *key, uint8_t *iv) {
+static void deriveKeyAndIv(char *password, const EVP_CIPHER *cipher, uint8_t *key, uint8_t *iv) {
 	if (!EVP_BytesToKey(cipher, EVP_sha256(), NULL, (unsigned char *)password, strlen(password), 1, key, iv)) {
 		exitWithError("PKCS5_PBKDF2_HMAC failed while deriving key and IV\n");
 	}
 }
 
 // Fuente: https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
-static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plainText, size_t plainTextLen, uint8_t *key, uint8_t *iv,
+static size_t encrypt(const EVP_CIPHER *cipher, uint8_t *plainText, size_t plainTextLen, uint8_t *key, uint8_t *iv,
 					  unsigned char *cipherText) {
 	EVP_CIPHER_CTX *ctx;
 
@@ -146,7 +122,7 @@ static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plainText, size_t plainTextLe
 	return cipherTextLen;
 }
 
-static size_t decrypt(EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherTextLen, uint8_t *key, uint8_t *iv,
+static size_t decrypt(const EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherTextLen, uint8_t *key, uint8_t *iv,
 					  uint8_t *plainText) {
 	EVP_CIPHER_CTX *ctx;
 
@@ -190,7 +166,7 @@ static size_t decrypt(EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherText
 }
 
 void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
-	EVP_CIPHER *cipher = getCipherFunction(blockCipher, modeOfOperation);
+	const EVP_CIPHER *cipher = getCipherFunction(blockCipher, modeOfOperation);
 	uint32_t blockSize = EVP_CIPHER_block_size(cipher);
 
 	uint32_t keyLength = EVP_CIPHER_key_length(cipher);
@@ -226,7 +202,7 @@ void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOp
 
 size_t decryptFile(uint8_t *cipherText, size_t cipherTextLength, uint8_t *plainText, char *password, BlockCipher_t blockCipher,
 				   ModeOfOperation_t modeOfOperation) {
-	EVP_CIPHER *cipher = getCipherFunction(blockCipher, modeOfOperation);
+	const EVP_CIPHER *cipher = getCipherFunction(blockCipher, modeOfOperation);
 
 	size_t keyLength = EVP_CIPHER_key_length(cipher);
 	size_t ivLength = EVP_CIPHER_iv_length(cipher);

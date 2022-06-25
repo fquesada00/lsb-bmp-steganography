@@ -19,8 +19,6 @@ void lsbNHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverIm
 	uint32_t messageLength = getFileLength(input);
 	uint32_t outputByteSize = BYTE_BITS / n;
 
-	uint32_t length;
-
 	if (coverImageLength < messageLength * outputByteSize) {
 		exitWithError("Cover image is too small to hide the message");
 	}
