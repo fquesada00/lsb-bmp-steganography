@@ -97,11 +97,6 @@ static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_
 
 // Returns dynamically allocated key and IV.
 static void deriveKeyAndIv(char *password, EVP_CIPHER *cipher, uint8_t *key, uint8_t *iv) {
-	int keyLength = EVP_CIPHER_key_length(cipher);
-	int ivLength = EVP_CIPHER_iv_length(cipher);
-
-	const unsigned char *salt = (unsigned char *)"";
-
 	if (!EVP_BytesToKey(cipher, EVP_sha256(), NULL, (unsigned char *)password, strlen(password), 1, key, iv)) {
 		exitWithError("PKCS5_PBKDF2_HMAC failed while deriving key and IV\n");
 	}
@@ -141,12 +136,12 @@ static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plainText, size_t plainTextLe
 	 * Finalise the encryption. Further cipherText bytes may be written at
 	 * this stage.
 	 */
-	if (1 != EVP_EncryptFinal_ex(ctx, cipherText + len, &len))
+	if (1 != EVP_EncryptFinal(ctx, cipherText + len, &len))
 		exitWithError("Error finalising encryption\n");
 	cipherTextLen += len;
 
 	/* Clean up */
-	EVP_CIPHER_CTX_free(ctx);
+	EVP_CIPHER_CTX_cleanup(ctx);
 
 	return cipherTextLen;
 }
@@ -185,18 +180,19 @@ static size_t decrypt(EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherText
 	 * this stage.
 	 */
 	printf("%d\n", plainTextLen);
-	if (1 != EVP_DecryptFinal_ex(ctx, plainText + len, &len))
+	if (1 != EVP_DecryptFinal(ctx, plainText + len, &len))
 		exitWithError("Error finalising decryption\n");
 	plainTextLen += len;
 
 	/* Clean up */
-	EVP_CIPHER_CTX_free(ctx);
+	EVP_CIPHER_CTX_cleanup(ctx);
 
 	return plainTextLen;
 }
 
 void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
 	EVP_CIPHER *cipher = getCipherFunction(blockCipher, modeOfOperation);
+	printf("cipher: %s\n", EVP_CIPHER_name(cipher));
 	uint32_t blockSize = EVP_CIPHER_block_size(cipher);
 
 	uint32_t keyLength = EVP_CIPHER_key_length(cipher);
@@ -225,6 +221,7 @@ void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOp
 	fwrite(cipherText, sizeof(uint8_t), cipherTextOffset, file);
 
 	rewind(file);
+	printf("Encrypted file length: %ld\n", getFileLength(file));
 }
 
 size_t decryptFile(uint8_t *cipherText, size_t cipherTextLength, uint8_t *plainText, char *password, BlockCipher_t blockCipher,

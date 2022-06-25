@@ -164,12 +164,13 @@ void lsbImprovedHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t 
 	uint32_t messageLength = getFileLength(input);
 	long coverImageStartPos = ftell(coverImage);
 
+	// start after bytes stored for patterns
+	fseek(coverImage, LSBIMPROVED_PATTERNS, SEEK_CUR);
 	for (int i = 0; i < messageLength; i++) {
 		uint8_t messageByte = readByte(input);
 		for (int j = 0; j < BYTE_BITS; j++) {
 			uint8_t coverByte = readByte(coverImage);
 			uint8_t patternIndex = readLsbs((coverByte >> 1), 2);
-
 			bool inverted = readNthBit(coverByte, BYTE_BITS - 1) ^ readNthBit(messageByte, j);
 
 			if (inverted) {
@@ -183,14 +184,23 @@ void lsbImprovedHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t 
 	bool invertPatterns[LSBIMPROVED_PATTERNS] = {false};
 
 	// determinar si se debe invertir cada patron (si la # de invertidos es mayor a preservados, entonces se invierte)
+
+	rewind(input);
+	fseek(coverImage, coverImageStartPos, SEEK_SET);
+
 	for (int i = 0; i < LSBIMPROVED_PATTERNS; i++) {
 		if (preservedPatternsCount[i] < invertedPatternsCount[i]) {
 			invertPatterns[i] = true;
 		}
 	}
 
-	rewind(input);
-	fseek(coverImage, coverImageStartPos, SEEK_SET);
+	// escribir patrones en el archivo de salida, se mueven 4 bytes
+	for (int i = 0; i < LSBIMPROVED_PATTERNS; i++) {
+		uint8_t imageByte = readByte(coverImage);
+		imageByte &= ~(BIT_MASK(uint8_t, 1));
+		imageByte |= invertPatterns[i];
+		writeByte(outputImage, imageByte);
+	}
 
 	FILE *tmpInput = fopen(TMP_LSBI_FILENAME, "w+");
 	// invertir los patrones que sean necesarios
@@ -217,14 +227,7 @@ void lsbImprovedHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t 
 		writeByte(tmpInput, newMessageByte);
 	}
 	rewind(tmpInput);
-	fseek(coverImage, coverImageStartPos, SEEK_SET);
-
-	for (int i = 0; i < LSBIMPROVED_PATTERNS; i++) {
-		uint8_t imageByte = readByte(coverImage);
-		imageByte &= ~(BIT_MASK(uint8_t, 1));
-		imageByte |= invertPatterns[i];
-		writeByte(outputImage, imageByte);
-	}
+	fseek(coverImage, coverImageStartPos + LSBIMPROVED_PATTERNS, SEEK_SET);
 
 	lsbNHide(coverImage, tmpInput, outputImage, coverImageLength - LSBIMPROVED_PATTERNS, 1);
 
@@ -236,7 +239,7 @@ size_t lsbImprovedExtract(FILE *image, long imageSize, uint8_t *extractedMessage
 	// Extract invertPatterns (4 bits)
 	bool patterns[LSBIMPROVED_PATTERNS];
 	for (int i = 0; i < LSBIMPROVED_PATTERNS; i++) {
-		patterns[i] = readNthBit(readByte(image), 1);
+		patterns[i] = readNthBit(readByte(image), 7);
 		// [0] => 00, [1] => 01, [2] => 10, [3] => 11
 	}
 
@@ -246,10 +249,10 @@ size_t lsbImprovedExtract(FILE *image, long imageSize, uint8_t *extractedMessage
 	long startPos = ftell(image);
 
 	for (int i = 0; i < imageSize - startPos; i++) {
-		uint8_t messageByte = readByte(image);
-		int bytePatternIndex = readLsbs(messageByte >> 1, 2);
+		uint8_t coverByte = readByte(image);
+		int bytePatternIndex = readLsbs(coverByte >> 1, 2);
 		bool invert = patterns[bytePatternIndex];
-		writeByte(tmp, messageByte ^ invert);
+		writeByte(tmp, coverByte ^ invert);
 	}
 
 	fseek(tmp, 0, SEEK_SET);

@@ -71,7 +71,6 @@ FILE *saveExtractedMessageToFile(uint8_t *extractedMessage, uint32_t length, cha
 uint32_t getFileLength(FILE *stream) {
 
 	long startPos = ftell(stream);
-
 	fseek(stream, 0L, SEEK_END);
 	long imageSize = ftell(stream);
 	fseek(stream, startPos, SEEK_SET);
@@ -125,6 +124,6 @@ FILE *copyEncodedInputToFile(FILE *inputStream, char *extension) {
 	return tmp;
 }
 
-uint8_t readLsbs(uint8_t byte, uint8_t n) { return byte & BIT_MASK(uint8_t, n); }
+uint8_t readLsbs(uint8_t byte, uint8_t n) { return byte & (BIT_MASK(uint8_t, n)); }
 
-uint8_t readNthBit(uint8_t byte, uint8_t n) { return (byte >> (BYTE_BITS - 1 - n)) & BIT_MASK(uint8_t, 1); }
+uint8_t readNthBit(uint8_t byte, uint8_t n) { return (byte >> (BYTE_BITS - 1 - n)) & (BIT_MASK(uint8_t, 1)); }
