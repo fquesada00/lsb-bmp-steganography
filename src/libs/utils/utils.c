@@ -104,6 +104,8 @@ FILE *copyEncodedInputToFile(FILE *inputStream, char *extension) {
 	uint32_t inputLength = getFileLength(inputStream);
 	uint32_t inputLengthBigEndian = htonl(inputLength);
 	FILE *tmp = createStream(TMP_FILENAME, "w+");
+	printf("Input file length: %u\n", inputLength);
+	printf("Input file length: %u\n", inputLengthBigEndian);
 
 	// cargamos los 4 bytes del largo del mensaje (de izquierda a derecha de a bytes)
 	fwrite(&inputLengthBigEndian, sizeof(inputLengthBigEndian), 1, tmp);

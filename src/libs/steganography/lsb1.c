@@ -1,3 +1,4 @@
+#include <args.h>
 #include <arpa/inet.h>
 #include <bmp.h>
 #include <constants.h>
@@ -11,11 +12,14 @@
 
 static size_t lsbNExtract(FILE *image, long imageSize, uint8_t *extractedMessage, size_t n, bool isEncrypted);
 static void lsbNHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverImageSize, size_t lsbCount);
+void lsbImprovedHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverImageLength);
 
 void lsbNHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverImageLength, size_t n) {
 
 	uint32_t messageLength = getFileLength(input);
 	uint32_t outputByteSize = BYTE_BITS / n;
+
+	uint32_t length;
 
 	if (coverImageLength < messageLength * outputByteSize) {
 		exitWithError("Cover image is too small to hide the message");
@@ -49,7 +53,7 @@ void writeLsbByte(FILE *src, FILE *dest, uint8_t messageByte, size_t n) {
 
 	for (int i = bytes - 1; i >= 0; i--) {
 		uint8_t imageByte = readByte(src);
-		uint8_t lsbs = readLsbs(messageByte, (n * i));
+		uint8_t lsbs = readLsbs((messageByte >> (n * i)), n);
 		imageByte &= ~mask;
 		imageByte |= lsbs;
 		writeByte(dest, imageByte);
@@ -59,12 +63,15 @@ void writeLsbByte(FILE *src, FILE *dest, uint8_t messageByte, size_t n) {
 void lsbHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverImageLength, Steganography_t mode) {
 	switch (mode) {
 		case LSB1:
-			return lsbNHide(coverImage, input, outputImage, coverImageLength, 1);
+			lsbNHide(coverImage, input, outputImage, coverImageLength, getLsbCount(mode));
+			break;
 		case LSB4:
-			return lsbNHide(coverImage, input, outputImage, coverImageLength, 4);
+			lsbNHide(coverImage, input, outputImage, coverImageLength, getLsbCount(mode));
+			break;
 		case LSBI:
 			printf("%d\n", coverImageLength);
-			return lsbImprovedHide(coverImage, input, outputImage, coverImageLength);
+			lsbImprovedHide(coverImage, input, outputImage, coverImageLength);
+			break;
 		default:
 			exitWithError("Invalid steganography mode");
 	}
@@ -73,9 +80,9 @@ void lsbHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverIma
 size_t lsbExtract(FILE *image, long imageSize, uint8_t *extractedMessage, Steganography_t mode, bool isEncrypted) {
 	switch (mode) {
 		case LSB1:
-			return lsbNExtract(image, imageSize, extractedMessage, 1, isEncrypted);
+			return lsbNExtract(image, imageSize, extractedMessage, getLsbCount(mode), isEncrypted);
 		case LSB4:
-			return lsbNExtract(image, imageSize, extractedMessage, 4, isEncrypted);
+			return lsbNExtract(image, imageSize, extractedMessage, getLsbCount(mode), isEncrypted);
 		case LSBI:
 			return lsbImprovedExtract(image, imageSize, extractedMessage, isEncrypted);
 		default:
@@ -198,7 +205,7 @@ void lsbImprovedHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t 
 
 			bool invert = invertPatterns[patternIndex];
 			if (invert) {
-				newMessageByte |= ~readNthBit(messageByte, j);
+				newMessageByte |= readNthBit(~messageByte, j);
 			} else {
 				newMessageByte |= readNthBit(messageByte, j);
 			}
@@ -212,9 +219,17 @@ void lsbImprovedHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t 
 	rewind(tmpInput);
 	fseek(coverImage, coverImageStartPos, SEEK_SET);
 
-	lsbNHide(coverImage, tmpInput, outputImage, coverImageLength, 1);
+	for (int i = 0; i < LSBIMPROVED_PATTERNS; i++) {
+		uint8_t imageByte = readByte(coverImage);
+		imageByte &= ~(BIT_MASK(uint8_t, 1));
+		imageByte |= invertPatterns[i];
+		writeByte(outputImage, imageByte);
+	}
+
+	lsbNHide(coverImage, tmpInput, outputImage, coverImageLength - LSBIMPROVED_PATTERNS, 1);
 
 	fclose(tmpInput);
+	remove(TMP_LSBI_FILENAME);
 }
 
 size_t lsbImprovedExtract(FILE *image, long imageSize, uint8_t *extractedMessage, bool isEncrypted) {
