@@ -161,7 +161,7 @@ static size_t decrypt(const EVP_CIPHER *cipher, uint8_t *cipherText, size_t ciph
 	plainTextLen += len;
 
 	/* Clean up */
-	EVP_CIPHER_CTX_cleanup(ctx);
+	EVP_CIPHER_CTX_free(ctx);
 
 	return plainTextLen;
 }
