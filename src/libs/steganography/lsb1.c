@@ -33,10 +33,11 @@ void lsbNHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverIm
 
 	// cargamos los bytes restantes del archivo
 	uint32_t remainingLength = coverImageLength - messageLength * outputByteSize;
-	uint8_t dump[remainingLength];
+	uint8_t *dump = calloc(remainingLength, sizeof(uint8_t));
 	// TODO: Check	errors
 	fread((void *)dump, 1, remainingLength, coverImage);
 	fwrite((void *)dump, 1, remainingLength, outputImage);
+	free(dump);
 }
 
 void writeLsbByte(FILE *src, FILE *dest, uint8_t messageByte, size_t n) {

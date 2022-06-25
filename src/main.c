@@ -14,6 +14,7 @@ int main(int argc, char *argv[]) {
 	parseArgs(&args, argc, argv);
 
 	BmpHeader header = {0};
+
 	FILE *coverImage = createStream(args.bitmapFile, "r");
 	FILE *outputImage = NULL;
 
@@ -39,18 +40,22 @@ int main(int argc, char *argv[]) {
 		// remove the encoded input file
 		remove(TMP_FILENAME);
 	} else if (args.extract) {
+
 		loadHeader(coverImage, &header);
+
 		skipOffset(coverImage, header.offset);
 
 		size_t lsbCount = getLsbCount(args.steganographyMode);
 		uint32_t outputByteSize = BYTE_BITS / lsbCount;
 
-		uint8_t extractedMessage[header.size / outputByteSize];
-		bool isEncrypted = strlen(args.password) > 0;
+		uint8_t *extractedMessage = calloc(header.size / outputByteSize, sizeof(uint8_t));
+
+		bool isEncrypted = strnlen(args.password, MAX_PASSWORD_LENGTH) > 0;
+
 		size_t extractedLength =
 			lsbExtract(coverImage, header.size - header.offset, extractedMessage, args.steganographyMode, isEncrypted);
 
-		uint8_t plainText[extractedLength];
+		uint8_t *plainText = calloc(extractedLength, sizeof(uint8_t));
 		if (isEncrypted) {
 			extractedLength = decryptFile(extractedMessage + sizeof(uint32_t), extractedLength - sizeof(uint32_t), plainText,
 										  args.password, args.blockCipher, args.modeOfOperation);
@@ -58,6 +63,9 @@ int main(int argc, char *argv[]) {
 		}
 
 		outputImage = saveExtractedMessageToFile(extractedMessage, extractedLength, args.out);
+
+		free(extractedMessage);
+		free(plainText);
 	}
 
 	closeStream(coverImage);

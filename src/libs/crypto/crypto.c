@@ -203,9 +203,9 @@ void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOp
 	// Write plainText to output buffer
 	uint32_t fileLength = getFileLength(file);
 
-	uint8_t plainText[fileLength];
+	uint8_t *plainText = calloc(fileLength, sizeof(uint8_t));
 	uint32_t cipherTextLength = sizeof(uint32_t) + fileLength + blockSize;
-	uint8_t cipherText[cipherTextLength];
+	uint8_t *cipherText = calloc(cipherTextLength, sizeof(uint8_t));
 
 	fread(plainText, sizeof(uint8_t), fileLength, file);
 	rewind(file);
@@ -219,6 +219,9 @@ void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOp
 	fwrite(cipherText, sizeof(uint8_t), cipherTextOffset, file);
 
 	rewind(file);
+
+	free(plainText);
+	free(cipherText);
 }
 
 size_t decryptFile(uint8_t *cipherText, size_t cipherTextLength, uint8_t *plainText, char *password, BlockCipher_t blockCipher,
