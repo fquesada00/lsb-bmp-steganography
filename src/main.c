@@ -26,19 +26,10 @@ int main(int argc, char *argv[]) {
 		// TODO: sacar el hardcodeo de la extension
 		FILE *encodedInputTmp = copyEncodedInputToFile(inputMessage, ".png");
 
-		if (strlen(args.password) > 0) {
+		bool encrypt = strlen(args.password) > 0;
+		if (encrypt) {
 			encryptFile(encodedInputTmp, args.password, args.blockCipher, args.modeOfOperation);
-			// encodedInputTm = encrypted_size || encrypted_data
 		}
-
-		// FILE *ourEncryption = createStream("./ourEncryption", "w");
-		// uint32_t encryptedSize = getFileLength(encodedInputTmp);
-		// uint8_t encryptedData[encryptedSize];
-		// fread(encryptedData, sizeof(uint8_t), encryptedSize, encodedInputTmp);
-		// fwrite(encryptedData, sizeof(uint8_t), encryptedSize, ourEncryption);
-		// // FILE *encodedInputTmp = createStream("extractedEncryption", "r");
-		// rewind(encodedInputTmp);
-		// fclose(ourEncryption);
 
 		lsbHide(coverImage, encodedInputTmp, outputImage, header.size - header.offset, args.steganographyMode);
 
@@ -56,11 +47,8 @@ int main(int argc, char *argv[]) {
 
 		uint8_t extractedMessage[header.size / outputByteSize];
 		bool isEncrypted = strlen(args.password) > 0;
-		size_t extractedLength = lsbExtract(coverImage, header.size /*no deberia ser header.size - header.offset ?????*/,
-											extractedMessage, args.steganographyMode, isEncrypted);
-		// FILE *saveEncryptedText = fopen("extractedEncryption", "w");
-		// fwrite(extractedMessage, sizeof(uint8_t), extractedLength, saveEncryptedText);
-		// fclose(saveEncryptedText);
+		size_t extractedLength =
+			lsbExtract(coverImage, header.size - header.offset, extractedMessage, args.steganographyMode, isEncrypted);
 
 		uint8_t plainText[extractedLength];
 		if (isEncrypted) {

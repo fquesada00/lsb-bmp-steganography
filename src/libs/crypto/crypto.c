@@ -179,7 +179,6 @@ static size_t decrypt(EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherText
 	 * Finalise the decryption. Further plainText bytes may be written at
 	 * this stage.
 	 */
-	printf("%d\n", plainTextLen);
 	if (1 != EVP_DecryptFinal(ctx, plainText + len, &len))
 		exitWithError("Error finalising decryption\n");
 	plainTextLen += len;
@@ -192,7 +191,6 @@ static size_t decrypt(EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherText
 
 void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
 	EVP_CIPHER *cipher = getCipherFunction(blockCipher, modeOfOperation);
-	printf("cipher: %s\n", EVP_CIPHER_name(cipher));
 	uint32_t blockSize = EVP_CIPHER_block_size(cipher);
 
 	uint32_t keyLength = EVP_CIPHER_key_length(cipher);
@@ -221,7 +219,6 @@ void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOp
 	fwrite(cipherText, sizeof(uint8_t), cipherTextOffset, file);
 
 	rewind(file);
-	printf("Encrypted file length: %ld\n", getFileLength(file));
 }
 
 size_t decryptFile(uint8_t *cipherText, size_t cipherTextLength, uint8_t *plainText, char *password, BlockCipher_t blockCipher,

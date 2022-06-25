@@ -69,7 +69,6 @@ void lsbHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverIma
 			lsbNHide(coverImage, input, outputImage, coverImageLength, getLsbCount(mode));
 			break;
 		case LSBI:
-			printf("%d\n", coverImageLength);
 			lsbImprovedHide(coverImage, input, outputImage, coverImageLength);
 			break;
 		default:
@@ -101,7 +100,7 @@ static size_t lsbNExtract(FILE *image, long imageSize, uint8_t *extractedMessage
 		if (i != sizeof(messageLength) - 1)
 			messageLength <<= BYTE_BITS;
 	}
-	printf("Message length: %ld - Image size: %d\n", messageLength, imageSize);
+
 	// Copy the message length to the output buffer
 	uint32_t messageLengthBigEndian = htonl(messageLength);
 	memcpy(extractedMessage, &messageLengthBigEndian, sizeof(messageLength));

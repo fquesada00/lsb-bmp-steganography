@@ -16,7 +16,6 @@ FILE *createStream(char *path, const char *mode) {
 	printf("Opening file %s\n", path);
 	FILE *stream = fopen(path, mode);
 	if (stream == NULL) {
-		perror("ERROR");
 		fprintf(stderr, "Error opening file with path: %s\n", path);
 		exit(EXIT_FAILURE);
 	}
@@ -104,8 +103,6 @@ FILE *copyEncodedInputToFile(FILE *inputStream, char *extension) {
 	uint32_t inputLength = getFileLength(inputStream);
 	uint32_t inputLengthBigEndian = htonl(inputLength);
 	FILE *tmp = createStream(TMP_FILENAME, "w+");
-	printf("Input file length: %u\n", inputLength);
-	printf("Input file length: %u\n", inputLengthBigEndian);
 
 	// cargamos los 4 bytes del largo del mensaje (de izquierda a derecha de a bytes)
 	fwrite(&inputLengthBigEndian, sizeof(inputLengthBigEndian), 1, tmp);
