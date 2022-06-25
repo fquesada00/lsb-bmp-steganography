@@ -27,17 +27,9 @@ int main(int argc, char *argv[]) {
 
 		if (strlen(args.password) > 0) {
 			encryptFile(encodedInputTmp, args.password, args.blockCipher, args.modeOfOperation);
-
-			FILE *cryptoFile = fopen("./cryptoEmbed.txt", "w");
-			uint8_t auxBuff[header.size];
-			fread(auxBuff, sizeof(uint8_t), header.size, encodedInputTmp);
-			fwrite(auxBuff, sizeof(uint8_t), header.size, cryptoFile);
-			fclose(cryptoFile);
 		}
 
-		if (args.steganographyMode == LSB1 || args.steganographyMode == LSB4) {
-			lsbHide(coverImage, encodedInputTmp, outputImage, header.size - header.offset, getLsbCount(args.steganographyMode));
-		}
+		lsbHide(coverImage, encodedInputTmp, outputImage, header.size - header.offset, args.steganographyMode);
 
 		closeStream(inputMessage);
 		closeStream(encodedInputTmp);
@@ -48,26 +40,21 @@ int main(int argc, char *argv[]) {
 		loadHeader(coverImage, &header);
 		skipOffset(coverImage, header.offset);
 
-		if (args.steganographyMode == LSB1 || args.steganographyMode == LSB4) {
-			size_t lsbCount = getLsbCount(args.steganographyMode);
-			uint32_t outputByteSize = BYTE_BITS / lsbCount;
+		size_t lsbCount = getLsbCount(args.steganographyMode);
+		uint32_t outputByteSize = BYTE_BITS / lsbCount;
 
-			uint8_t extractedMessage[header.size / outputByteSize];
-			bool isEncrypted = strlen(args.password) > 0;
-			size_t extractedLength = lsbExtract(coverImage, header.size, extractedMessage, lsbCount, isEncrypted);
+		uint8_t extractedMessage[header.size / outputByteSize];
+		bool isEncrypted = strlen(args.password) > 0;
+		size_t extractedLength = lsbExtract(coverImage, header.size, extractedMessage, args.steganographyMode, isEncrypted);
 
-			uint8_t plainText[extractedLength];
-			if (isEncrypted) {
-				FILE *cryptoFile = fopen("./cryptoExtracted.txt", "w");
-				fwrite(extractedMessage, sizeof(uint8_t), extractedLength, cryptoFile);
-				fclose(cryptoFile);
-				extractedLength = decryptFile(extractedMessage, extractedLength, plainText, args.password, args.blockCipher,
-											  args.modeOfOperation);
-				memcpy(extractedMessage, plainText, extractedLength);
-			}
-
-			outputImage = saveExtractedMessageToFile(extractedMessage, extractedLength, args.out);
+		uint8_t plainText[extractedLength];
+		if (isEncrypted) {
+			extractedLength = decryptFile(extractedMessage + sizeof(uint32_t), extractedLength - sizeof(uint32_t), plainText,
+										  args.password, args.blockCipher, args.modeOfOperation);
+			memcpy(extractedMessage, plainText, extractedLength);
 		}
+
+		outputImage = saveExtractedMessageToFile(extractedMessage, extractedLength, args.out);
 	}
 
 	closeStream(coverImage);

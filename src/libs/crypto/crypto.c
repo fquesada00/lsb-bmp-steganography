@@ -6,10 +6,10 @@
 
 static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation);
 static void deriveKeyAndIv(char *password, EVP_CIPHER *cipher, uint8_t *keyAndIv);
-static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, size_t plaintextLen, uint8_t *key, uint8_t *iv,
-					  unsigned char *ciphertext);
-static size_t decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, size_t ciphertext_len, uint8_t *key, uint8_t *iv,
-					  unsigned char *plaintext);
+static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plainText, size_t plainTextLen, uint8_t *key, uint8_t *iv,
+					  unsigned char *cipherText);
+static size_t decrypt(EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherTextLen, uint8_t *key, uint8_t *iv,
+					  unsigned char *plainText);
 
 static EVP_CIPHER *getCipherFunction(BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
 	EVP_CIPHER *cipher = NULL;
@@ -108,13 +108,13 @@ static void deriveKeyAndIv(char *password, EVP_CIPHER *cipher, uint8_t *keyAndIv
 }
 
 // Fuente: https://wiki.openssl.org/index.php/EVP_Symmetric_Encryption_and_Decryption
-static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, size_t plaintextLen, uint8_t *key, uint8_t *iv,
-					  unsigned char *ciphertext) {
+static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plainText, size_t plainTextLen, uint8_t *key, uint8_t *iv,
+					  unsigned char *cipherText) {
 	EVP_CIPHER_CTX *ctx;
 
 	int len;
 
-	size_t ciphertext_len;
+	size_t cipherTextLen;
 
 	/* Create and initialise the context */
 	if (!(ctx = EVP_CIPHER_CTX_new()))
@@ -133,31 +133,31 @@ static size_t encrypt(EVP_CIPHER *cipher, uint8_t *plaintext, size_t plaintextLe
 	 * Provide the message to be encrypted, and obtain the encrypted output.
 	 * EVP_EncryptUpdate can be called multiple times if necessary
 	 */
-	if (1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintextLen))
+	if (1 != EVP_EncryptUpdate(ctx, cipherText, &len, plainText, plainTextLen))
 		exitWithError("Error encrypting\n");
-	ciphertext_len = len;
+	cipherTextLen = len;
 
 	/*
-	 * Finalise the encryption. Further ciphertext bytes may be written at
+	 * Finalise the encryption. Further cipherText bytes may be written at
 	 * this stage.
 	 */
-	if (1 != EVP_EncryptFinal_ex(ctx, ciphertext + len, &len))
+	if (1 != EVP_EncryptFinal_ex(ctx, cipherText + len, &len))
 		exitWithError("Error finalising encryption\n");
-	ciphertext_len += len;
+	cipherTextLen += len;
 
 	/* Clean up */
 	EVP_CIPHER_CTX_free(ctx);
 
-	return ciphertext_len;
+	return cipherTextLen;
 }
 
-static size_t decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, size_t ciphertext_len, uint8_t *key, uint8_t *iv,
-					  uint8_t *plaintext) {
+static size_t decrypt(EVP_CIPHER *cipher, uint8_t *cipherText, size_t cipherTextLen, uint8_t *key, uint8_t *iv,
+					  uint8_t *plainText) {
 	EVP_CIPHER_CTX *ctx;
 
 	int len;
 
-	size_t plaintextLen;
+	size_t plainTextLen;
 
 	/* Create and initialise the context */
 	if (!(ctx = EVP_CIPHER_CTX_new()))
@@ -173,25 +173,25 @@ static size_t decrypt(EVP_CIPHER *cipher, uint8_t *ciphertext, size_t ciphertext
 		exitWithError("Error initialising cipher\n");
 
 	/*
-	 * Provide the message to be decrypted, and obtain the plaintext output.
+	 * Provide the message to be decrypted, and obtain the plainText output.
 	 * EVP_DecryptUpdate can be called multiple times if necessary.
 	 */
-	if (1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
+	if (1 != EVP_DecryptUpdate(ctx, plainText, &len, cipherText, cipherTextLen))
 		exitWithError("Error decrypting\n");
-	plaintextLen = len;
+	plainTextLen = len;
 
 	/*
-	 * Finalise the decryption. Further plaintext bytes may be written at
+	 * Finalise the decryption. Further plainText bytes may be written at
 	 * this stage.
 	 */
-	if (1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len))
+	if (1 != EVP_DecryptFinal_ex(ctx, plainText + len, &len))
 		exitWithError("Error finalising decryption\n");
-	plaintextLen += len;
+	plainTextLen += len;
 
 	/* Clean up */
 	EVP_CIPHER_CTX_free(ctx);
 
-	return plaintextLen;
+	return plainTextLen;
 }
 
 void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOperation_t modeOfOperation) {
@@ -206,7 +206,9 @@ void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOp
 	uint8_t *key = keyAndIv;
 	uint8_t *iv = keyAndIv + keyLength;
 
+	// Write plainText to output buffer
 	uint32_t fileLength = getFileLength(file);
+
 	uint8_t plainText[fileLength];
 	uint32_t cipherTextLength = sizeof(uint32_t) + fileLength + blockSize;
 	uint8_t cipherText[cipherTextLength];
@@ -217,10 +219,12 @@ void encryptFile(FILE *file, char *password, BlockCipher_t blockCipher, ModeOfOp
 	uint32_t cipherTextOffset = encrypt(cipher, plainText, fileLength, key, iv, cipherText);
 	uint32_t cipherTextOffsetBigEndian = htonl(cipherTextOffset);
 
-	// Write ciphertext length to file
+	// Write cipherText length to file
 	fwrite(&cipherTextOffsetBigEndian, sizeof(uint32_t), 1, file);
-	// Write ciphertext to file
+	// Write cipherText to file
 	fwrite(cipherText, sizeof(uint8_t), cipherTextOffset, file);
+
+	rewind(file);
 }
 
 size_t decryptFile(uint8_t *cipherText, size_t cipherTextLength, uint8_t *plainText, char *password, BlockCipher_t blockCipher,
@@ -234,12 +238,7 @@ size_t decryptFile(uint8_t *cipherText, size_t cipherTextLength, uint8_t *plainT
 	deriveKeyAndIv(password, cipher, keyAndIv);
 	uint8_t *key = keyAndIv;
 	uint8_t *iv = keyAndIv + keyLength;
-	uint8_t dest[keyLength + 1];
-	strncpy(dest, key, keyLength);
-	dest[keyLength] = '\0';
 
-	printf("Key %s -- IV %s", dest, iv);
-	// Write plaintext to output buffer
 	size_t plainTextLength = decrypt(cipher, cipherText, cipherTextLength, key, iv, plainText);
 
 	return plainTextLength;

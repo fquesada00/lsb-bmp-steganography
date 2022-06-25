@@ -28,4 +28,8 @@ void writeByte(FILE *stream, uint8_t byte);
 
 FILE *copyEncodedInputToFile(FILE *inputStream, char *extension);
 
+uint8_t readLsbs(uint8_t byte, uint8_t n);
+
+uint8_t readNthBit(uint8_t byte, uint8_t n);
+
 #endif

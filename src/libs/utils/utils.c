@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utils.h>
 
 void exitWithError(char *message) {
 	perror(message);
@@ -67,10 +68,12 @@ FILE *saveExtractedMessageToFile(uint8_t *extractedMessage, uint32_t length, cha
 }
 
 uint32_t getFileLength(FILE *stream) {
-	// TODO: atajar errores
+
+	long startPos = ftell(stream);
+
 	fseek(stream, 0L, SEEK_END);
 	long imageSize = ftell(stream);
-	rewind(stream);
+	fseek(stream, startPos, SEEK_SET);
 	return (uint32_t)imageSize;
 }
 
@@ -114,6 +117,11 @@ FILE *copyEncodedInputToFile(FILE *inputStream, char *extension) {
 	size_t extensionLength = strnlen(extension, MAX_FILENAME_SIZE);
 	uint8_t *extensionBytes = (uint8_t *)extension;
 	fwrite(extensionBytes, 1, extensionLength + 1, tmp);
+	rewind(tmp);
 
 	return tmp;
 }
+
+uint8_t readLsbs(uint8_t byte, uint8_t n) { return byte & BIT_MASK(uint8_t, n); }
+
+uint8_t readNthBit(uint8_t byte, uint8_t n) { return (byte >> (BYTE_BITS - 1 - n)) & BIT_MASK(uint8_t, 1); }

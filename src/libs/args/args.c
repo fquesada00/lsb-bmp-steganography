@@ -147,6 +147,7 @@ void parseArgs(Args_t *args, int argc, char *argv[]) {
 size_t getLsbCount(Steganography_t lsbMode) {
 	switch (lsbMode) {
 		case LSB1:
+		case LSBI:
 			return 1;
 		case LSB4:
 			return 4;
