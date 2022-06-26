@@ -2,7 +2,7 @@
 #include <arpa/inet.h>
 #include <bmp.h>
 #include <constants.h>
-#include <lsb1.h>
+#include <lsb.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>

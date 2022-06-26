@@ -1,16 +1,9 @@
-#ifndef __LSB1_H__
-#define __LSB1_H__
+#ifndef __LSB_H__
+#define __LSB_H__
 
 #include <stdbool.h>
 #include <stdint.h>
 #include <steganography.h>
-
-typedef struct {
-	bool invert00;
-	bool invert01;
-	bool invert10;
-	bool invert11;
-} lsbimprovedPattern_t;
 
 size_t lsbExtract(FILE *image, long imageSize, uint8_t *extractedMessage, Steganography_t mode, bool isEncrypted);
 void lsbHide(FILE *coverImage, FILE *input, FILE *outputImage, uint32_t coverImageLength, Steganography_t mode);
